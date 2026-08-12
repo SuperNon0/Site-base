@@ -574,3 +574,27 @@ textarea::placeholder {
   border-color: var(--pending);
   color: var(--pending);
 }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   11. Bloc de commande (page « mot de passe oublié »)
+   ───────────────────────────────────────────────────────────────────────── */
+.cmd {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--accent);
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  margin: 0;
+  overflow-x: auto;
+  white-space: pre;
+}
+code {
+  font-family: var(--font-mono);
+  font-size: 0.82em;
+  color: var(--accent);
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 4px;
+  padding: 1px 5px;
+}

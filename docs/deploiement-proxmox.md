@@ -227,11 +227,20 @@ curl -X POST "$BOTPANEL_URL/api/notify" \
 | Sauvegarde | copier `/opt/site-base/data/site-base.db` (+ `.env`) |
 | Snapshot Proxmox | `pct snapshot 120 avant-maj` (ou l'UI) |
 
-### Réinitialiser / débloquer le super-admin
+### Changer / réinitialiser le mot de passe admin
 
-Si tu perds l'accès, le super-admin reste joignable **en LAN par mot de passe**
-(`SUPERADMIN_PASSWORD`). Le **dernier super-admin est indestructible** (ni
-suppression ni rétrogradation) pour éviter de se verrouiller dehors.
+- **Depuis le site** : connecté en super-admin → **Paramètres → Mot de passe
+  administrateur** (demande le mot de passe actuel).
+- **Mot de passe oublié** (sur le serveur, sans être connecté) :
+
+  ```bash
+  sudo bash /opt/site-base/deploy/reset_admin.sh            # saisie masquée
+  sudo bash /opt/site-base/deploy/reset_admin.sh "Nouveau!" # non interactif
+  ```
+
+Le super-admin reste toujours joignable **en LAN par mot de passe**. Le
+**dernier super-admin est indestructible** (ni suppression ni rétrogradation)
+pour éviter de se verrouiller dehors.
 
 ---
 

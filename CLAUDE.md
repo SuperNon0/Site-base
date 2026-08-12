@@ -74,12 +74,13 @@ panel/
   db.py               SQLite : schéma `comptes` + `audit`, amorce super-admin
   auth.py             Cloudflare Access (JWT), session, décorateurs
   notify.py           helper BotPanel notify(slug, **vars)
+  reset_admin.py      CLI de réinitialisation du mdp super-admin (python -m panel.reset_admin)
   utils.py            format date FR
   routes/
-    auth_routes.py    gateway, login local, demande d'accès, logout
-    accounts_routes.py gestion comptes + impersonation (spec §5/§6/§8)
+    auth_routes.py    gateway, login local, demande d'accès, mot de passe oublié, logout
+    accounts_routes.py gestion comptes + impersonation + Paramètres/mdp (spec §5/§6/§8)
     main.py           écran applicatif (à remplacer)
-  templates/          base + écrans d'auth + dashboard
+  templates/          base + écrans d'auth + parametres + oubli + dashboard
   static/             style.css (thème), fonts.css, logo.svg
 docs/                 spec auth, thème, notifications, déploiement, maquettes
 deploy/               install_lxc.sh, site-base.service, update.sh

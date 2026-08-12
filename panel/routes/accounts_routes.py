@@ -10,7 +10,8 @@ from __future__ import annotations
 import time
 
 from flask import (Blueprint, current_app, flash, redirect, render_template,
-                   session, url_for)
+                   request, session, url_for)
+from werkzeug.security import check_password_hash, generate_password_hash
 
 from ..auth import (current_compte, get_compte, is_super_admin,
                     login_required, super_admin_required)
@@ -19,6 +20,8 @@ from ..notify import notify
 from ..utils import fmt_dt
 
 bp = Blueprint("accounts", __name__)
+
+MIN_MDP_LEN = 8
 
 
 def _row_to_view(row) -> dict:
@@ -46,6 +49,52 @@ def comptes():
 def _acteur() -> str:
     c = get_compte(session.get("impersonator_id") or session.get("compte_id"))
     return (c["email"] if c and c["email"] else "super_admin")
+
+
+# ── Paramètres : mot de passe administrateur ────────────────────────────────
+@bp.route("/parametres")
+@super_admin_required
+def parametres():
+    # Compte super-admin réel (jamais l'identité impersonnée).
+    moi = get_compte(session.get("impersonator_id") or session.get("compte_id"))
+    return render_template(
+        "parametres.html",
+        has_password=bool(moi and moi["mdp_hash"]),
+        impersonating=bool(session.get("impersonator_id")),
+    )
+
+
+@bp.route("/parametres/mot-de-passe", methods=["POST"])
+@super_admin_required
+def changer_mdp():
+    # Interdit pendant une impersonation (on ne change pas le mdp d'un autre).
+    if session.get("impersonator_id"):
+        flash("Reviens à ton compte avant de changer le mot de passe.", "error")
+        return redirect(url_for("accounts.parametres"))
+
+    db = get_db()
+    moi = get_compte(session.get("compte_id"))
+    actuel = request.form.get("actuel", "")
+    nouveau = request.form.get("nouveau", "")
+    confirme = request.form.get("confirme", "")
+
+    # Si un mot de passe existe déjà, il faut fournir l'actuel.
+    if moi["mdp_hash"] and not check_password_hash(moi["mdp_hash"], actuel):
+        flash("Mot de passe actuel incorrect.", "error")
+        return redirect(url_for("accounts.parametres"))
+    if len(nouveau) < MIN_MDP_LEN:
+        flash(f"Le nouveau mot de passe doit faire au moins {MIN_MDP_LEN} caractères.", "error")
+        return redirect(url_for("accounts.parametres"))
+    if nouveau != confirme:
+        flash("La confirmation ne correspond pas.", "error")
+        return redirect(url_for("accounts.parametres"))
+
+    db.execute("UPDATE comptes SET mdp_hash = ? WHERE id = ?",
+               (generate_password_hash(nouveau), moi["id"]))
+    db.commit()
+    audit("changer_mdp", _acteur())
+    flash("Mot de passe administrateur mis à jour.", "success")
+    return redirect(url_for("accounts.parametres"))
 
 
 @bp.route("/api/comptes/<int:compte_id>/valider", methods=["POST"])

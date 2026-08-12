@@ -11,6 +11,7 @@
   <span class="badge">{{ brand.badge }}</span>
   <input type="password" name="password" placeholder="Mot de passe" autofocus autocomplete="current-password">
   <button type="submit" class="btn primary full">Se connecter</button>
+  <a class="forgot-link" href="{{ url_for('auth.forgot') }}">Mot de passe oublié ?</a>
   <p class="access-note">Accès local (réseau domestique) · administrateur</p>
 </form>
 {% endblock %}

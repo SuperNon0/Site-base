@@ -114,6 +114,16 @@ def request_access():
     return redirect(url_for("auth.gateway"))
 
 
+@bp.route("/mot-de-passe-oublie")
+def forgot():
+    """Explique comment réinitialiser le mot de passe super-admin (commande serveur).
+
+    Le reset se fait côté serveur (accès shell) et ne dépend donc pas d'être
+    connecté — voir panel/reset_admin.py et deploy/reset_admin.sh.
+    """
+    return render_template("oubli.html")
+
+
 @bp.route("/logout")
 def logout():
     session.clear()
