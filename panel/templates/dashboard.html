@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Accueil — {{ brand.prefix }}{{ brand.suffix }}{% endblock %}
+{% block badge %}{{ brand.badge }}{% endblock %}
+{% block content %}
+<main style="max-width:960px;margin:0 auto;padding:28px 20px 60px">
+  <div style="display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:22px">
+    <h1 style="font-size:1.9rem">Bienvenue{% if compte %}, {{ compte.email }}{% endif %}</h1>
+    <div style="display:flex;gap:8px;align-items:center">
+      {% if is_super_admin %}
+      <a class="btn ghost small" href="{{ url_for('accounts.comptes') }}">Comptes</a>
+      {% endif %}
+      <a class="btn ghost small" href="{{ url_for('auth.logout') }}">Déconnexion</a>
+    </div>
+  </div>
+
+  <p class="muted" style="margin-bottom:24px;max-width:640px">
+    Ceci est l'écran applicatif de démonstration du <b style="color:var(--text)">site de base</b>.
+    Le thème, le login v2 (Cloudflare Zero Trust), la gestion des comptes et les
+    notifications BotPanel sont déjà en place. Remplace ce contenu par ton projet.
+  </p>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px">
+    <div class="fl-card">
+      <div class="fl-label">Ton rôle</div>
+      <div class="fl-value-serif" style="font-size:1.6rem;margin-top:6px">
+        {{ 'super-admin' if is_super_admin else 'membre' }}
+      </div>
+    </div>
+    <div class="fl-card">
+      <div class="fl-label">Canal d'entrée</div>
+      <div class="fl-value-serif" style="font-size:1.6rem;margin-top:6px">
+        {{ 'local' if compte and compte.mdp_hash and not cf_email else 'cloudflare' }}
+      </div>
+    </div>
+    <div class="fl-card">
+      <div class="fl-label">Notifications</div>
+      <div class="fl-value-serif" style="font-size:1.6rem;margin-top:6px">BotPanel</div>
+      <div class="fl-label" style="margin-top:8px;text-transform:none;letter-spacing:0">
+        {{ 'configuré' if botpanel_url else 'non configuré' }}
+      </div>
+    </div>
+  </div>
+</main>
+{% endblock %}
