@@ -223,9 +223,39 @@ curl -X POST "$BOTPANEL_URL/api/notify" \
 |---|---|
 | Logs en direct | `journalctl -u site-base -f` |
 | Redémarrer | `systemctl restart site-base` |
-| Mettre à jour | `sudo bash /opt/site-base/deploy/update.sh` |
+| Mettre à jour (UI) | **Paramètres → Mise à jour → « Mettre à jour »** |
+| Mettre à jour (CLI) | `sudo bash /opt/site-base/deploy/update.sh` |
 | Sauvegarde | copier `/opt/site-base/data/site-base.db` (+ `.env`) |
 | Snapshot Proxmox | `pct snapshot 120 avant-maj` (ou l'UI) |
+
+### Bouton « Mettre à jour » depuis l'interface
+
+Connecté en super-admin, **Paramètres → Mise à jour** affiche la version en cours
+(branche + commit) et l'état du service. Le bouton **« Mettre à jour »** :
+
+1. `git fetch` + `git reset --hard origin/<branche>` (récupère la dernière version),
+2. `pip install -r requirements.txt` (met à jour les dépendances),
+3. redémarre le service, puis attend qu'il revienne et affiche la nouvelle version.
+
+Le journal des opérations s'affiche en direct sous le bouton.
+
+**Prérequis (posés automatiquement par `install_lxc.sh`) :**
+- `/opt/site-base` appartient à l'utilisateur du service (`sitebase`) → `git`/`pip`
+  se font **sans sudo**.
+- Une règle sudoers autorise **uniquement** le redémarrage du service sans mot de
+  passe :
+
+  ```
+  sitebase ALL=NOPASSWD: /bin/systemctl restart site-base
+  ```
+
+  (fichier `/etc/sudoers.d/site-base`). Rien d'autre n'est autorisé en sudo.
+
+> Endpoints correspondants (super-admin, `/api/*` en `no-store`, bloqués pendant
+> une impersonation) : `GET /api/system/info`, `POST /api/system/update`,
+> `POST /api/system/restart` — voir `panel/routes/system_routes.py`.
+> En dev local (hors systemd), la mise à jour Git/pip fonctionne mais le
+> redémarrage automatique n'a pas lieu (relance `python run.py` à la main).
 
 ### Changer / réinitialiser le mot de passe admin
 

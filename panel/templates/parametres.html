@@ -55,5 +55,86 @@
       <a class="btn ghost small" href="{{ url_for('accounts.comptes') }}">Ouvrir</a>
     </div>
   </section>
+
+  <!-- ------------------------------------------------------- mise à jour -->
+  <section class="acct-section">
+    <h3>Mise à jour</h3>
+    <div class="fl-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <div class="acct-main" style="min-width:0">
+          <span class="acct-mail" id="upd-version">Version : …</span>
+          <span class="acct-sub" id="upd-state">Récupère l'état du service…</span>
+        </div>
+        <button id="upd-btn" class="btn primary icon-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+          Mettre à jour
+        </button>
+      </div>
+      <pre class="cmd" id="upd-log" style="display:none;margin-top:12px;max-height:220px;overflow:auto;white-space:pre-wrap"></pre>
+    </div>
+    <p class="access-note" style="text-align:left;margin-top:8px">
+      Récupère la dernière version depuis Git, met à jour les dépendances puis
+      redémarre le service. Équivalent en ligne de commande :
+      <code>sudo bash deploy/update.sh</code>
+    </p>
+  </section>
 </div>
+
+<script>
+(function () {
+  var btn = document.getElementById("upd-btn");
+  var log = document.getElementById("upd-log");
+  var vEl = document.getElementById("upd-version");
+  var sEl = document.getElementById("upd-state");
+
+  function line(t) { log.style.display = "block"; log.textContent += t + "\n"; log.scrollTop = log.scrollHeight; }
+
+  function refreshInfo() {
+    return fetch("{{ url_for('system.info') }}").then(function (r) { return r.json(); }).then(function (d) {
+      vEl.textContent = "Version : " + (d.branch || "?") + " · " + (d.commit || "inconnue");
+      if (d.service_active === true) sEl.textContent = "Service actif ✓";
+      else if (d.service_active === false) sEl.textContent = "Service inactif";
+      else sEl.textContent = "Service : état inconnu (hors systemd)";
+    }).catch(function () { sEl.textContent = "État indisponible"; });
+  }
+
+  function waitBackUp(tries) {
+    tries = tries || 0;
+    return fetch("{{ url_for('system.info') }}", { cache: "no-store" })
+      .then(function (r) { return r.json(); })
+      .then(function (d) { line("→ De nouveau en ligne : " + (d.commit || "?")); refreshInfo(); done(); })
+      .catch(function () {
+        if (tries > 30) { line("⚠ Le service met du temps à revenir — recharge la page."); done(); return; }
+        setTimeout(function () { waitBackUp(tries + 1); }, 2000);
+      });
+  }
+
+  function done() { btn.disabled = false; btn.style.opacity = ""; }
+
+  btn.addEventListener("click", function () {
+    if (btn.disabled) return;
+    btn.disabled = true; btn.style.opacity = "0.6";
+    log.textContent = ""; line("==> Mise à jour en cours…");
+    fetch("{{ url_for('system.update') }}", { method: "POST" })
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        if (res.fetch) line((res.fetch.stdout || "") + (res.fetch.stderr || ""));
+        if (res.reset) line((res.reset.stdout || "") + (res.reset.stderr || ""));
+        if (res.pip) line((res.pip.stdout || "") + (res.pip.stderr || "") || "Dépendances à jour.");
+        if (res.error) { line("✗ " + res.error); done(); return; }
+        if (!res.ok) { line("✗ Échec de la mise à jour (voir ci-dessus)."); done(); return; }
+        line("✓ Code à jour. Redémarrage du service…");
+        return fetch("{{ url_for('system.restart') }}", { method: "POST" })
+          .then(function (r) { return r.json(); })
+          .then(function (rr) {
+            if (rr && rr.ok) { line("→ Redémarrage demandé, attente du retour…"); setTimeout(function () { waitBackUp(0); }, 2500); }
+            else { line("⚠ " + ((rr && rr.error) || "Redémarrage impossible — fais-le à la main.")); done(); }
+          });
+      })
+      .catch(function (e) { line("✗ Erreur réseau : " + e); done(); });
+  });
+
+  refreshInfo();
+})();
+</script>
 {% endblock %}

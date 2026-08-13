@@ -26,6 +26,8 @@ le login v2 et les notifications sont déjà en place, il n'y a qu'à ajouter le
   JWT** `Cf-Access-Jwt-Assertion` + `aud`, login local par mot de passe en LAN.
 - 🔔 **Notifications BotPanel** — helper `notify(slug, **vars)`, branché sur le
   cycle de vie des comptes, désactivable via `.env`.
+- 🔄 **Mise à jour en un clic** — Paramètres → « Mettre à jour » (git + pip +
+  redémarrage du service), en plus du changement de mot de passe admin.
 - 📦 **Déploiement Proxmox** — script LXC + service systemd + tunnel Cloudflare.
 
 ## Démarrage rapide (dev local)
@@ -50,6 +52,8 @@ Sans Cloudflare en local, connecte-toi avec le `SUPERADMIN_PASSWORD` (accès LAN
 | Refusé | Compte `refused` | `refus.html` |
 | Suspendu | Compte `bloqué` | `bloque.html` |
 | Comptes (gestion) | Super-admin | `comptes.html` |
+| Paramètres | Super-admin (mot de passe + mise à jour) | `parametres.html` |
+| Mot de passe oublié | Depuis le login | `oubli.html` |
 | Bandeau impersonation | « Voir en tant que » actif | `base.html` |
 | Dashboard démo | Connecté | `dashboard.html` (à remplacer) |
 

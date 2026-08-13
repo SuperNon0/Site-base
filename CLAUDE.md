@@ -79,6 +79,7 @@ panel/
   routes/
     auth_routes.py    gateway, login local, demande d'accès, mot de passe oublié, logout
     accounts_routes.py gestion comptes + impersonation + Paramètres/mdp (spec §5/§6/§8)
+    system_routes.py  /api/system/* : bouton « Mettre à jour » (git+pip+restart)
     main.py           écran applicatif (à remplacer)
   templates/          base + écrans d'auth + parametres + oubli + dashboard
   static/             style.css (thème), fonts.css, logo.svg

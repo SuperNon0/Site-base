@@ -57,6 +57,15 @@ cp "${INSTALL_DIR}/deploy/site-base.service" /etc/systemd/system/site-base.servi
 systemctl daemon-reload
 systemctl enable site-base.service
 
+echo ">>> [extra] sudoers (bouton « Mettre à jour » depuis l'UI)"
+# Autorise le service à se redémarrer sans mot de passe (git/pip se font sans sudo
+# car /opt/site-base appartient déjà à ${SERVICE_USER}).
+SUDOERS_FILE="/etc/sudoers.d/site-base"
+echo "${SERVICE_USER} ALL=NOPASSWD: /bin/systemctl restart site-base" > "${SUDOERS_FILE}"
+chmod 440 "${SUDOERS_FILE}"
+visudo -c -f "${SUDOERS_FILE}" >/dev/null
+echo "OK : ${SERVICE_USER} peut redémarrer le service sans mot de passe."
+
 echo ""
 echo "Installation terminée."
 echo "  1. Éditer ${INSTALL_DIR}/.env"
