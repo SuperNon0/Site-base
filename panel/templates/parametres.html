@@ -91,7 +91,7 @@
 
   function refreshInfo() {
     return fetch("{{ url_for('system.info') }}").then(function (r) { return r.json(); }).then(function (d) {
-      vEl.textContent = "Version : " + (d.branch || "?") + " · " + (d.commit || "inconnue");
+      vEl.textContent = "Version : " + (d.version || "inconnue");
       if (d.service_active === true) sEl.textContent = "Service actif ✓";
       else if (d.service_active === false) sEl.textContent = "Service inactif";
       else sEl.textContent = "Service : état inconnu (hors systemd)";
@@ -102,7 +102,7 @@
     tries = tries || 0;
     return fetch("{{ url_for('system.info') }}", { cache: "no-store" })
       .then(function (r) { return r.json(); })
-      .then(function (d) { line("→ De nouveau en ligne : " + (d.commit || "?")); refreshInfo(); done(); })
+      .then(function (d) { line("→ De nouveau en ligne — version " + (d.version || "?")); refreshInfo(); done(); })
       .catch(function () {
         if (tries > 30) { line("⚠ Le service met du temps à revenir — recharge la page."); done(); return; }
         setTimeout(function () { waitBackUp(tries + 1); }, 2000);
@@ -118,10 +118,13 @@
     fetch("{{ url_for('system.update') }}", { method: "POST" })
       .then(function (r) { return r.json(); })
       .then(function (res) {
-        if (res.fetch) line((res.fetch.stdout || "") + (res.fetch.stderr || ""));
-        if (res.reset) line((res.reset.stdout || "") + (res.reset.stderr || ""));
-        if (res.pip) line((res.pip.stdout || "") + (res.pip.stderr || "") || "Dépendances à jour.");
         if (res.error) { line("✗ " + res.error); done(); return; }
+        if (res.mode === "branch") line("Aucune version publiée (tag) — suivi de la branche.");
+        else if (res.to && res.from === res.to) line("Déjà sur la dernière version : " + res.to);
+        else if (res.to) line("Version : " + (res.from || "?") + " → " + res.to);
+        if (res.fetch) line((res.fetch.stderr || "").trim());
+        if (res.checkout) line((res.checkout.stdout || "") + (res.checkout.stderr || ""));
+        if (res.pip) line((res.pip.stdout || "") + (res.pip.stderr || "") || "Dépendances à jour.");
         if (!res.ok) { line("✗ Échec de la mise à jour (voir ci-dessus)."); done(); return; }
         line("✓ Code à jour. Redémarrage du service…");
         return fetch("{{ url_for('system.restart') }}", { method: "POST" })

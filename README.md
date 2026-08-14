@@ -66,6 +66,7 @@ Maquettes de référence + captures : [`docs/maquettes-auth-v2/`](docs/maquettes
 - [`docs/authentification-v2.md`](docs/authentification-v2.md) — spec complète de l'auth.
 - [`docs/notifications-botpanel.md`](docs/notifications-botpanel.md) — intégration BotPanel.
 - [`docs/deploiement-proxmox.md`](docs/deploiement-proxmox.md) — guide Proxmox + Cloudflare.
+- [`docs/versions.md`](docs/versions.md) — versionnage (tags `vX.Y.Z`) & mises à jour.
 
 ## Stack
 

@@ -18,6 +18,8 @@ nouveau projet. Il fournit, prêts à l'emploi :
    helper [`panel/notify.py`](panel/notify.py).
 4. **Le déploiement Proxmox (LXC/VM) + Cloudflare** —
    [`docs/deploiement-proxmox.md`](docs/deploiement-proxmox.md).
+5. **Le versionnage & les mises à jour** (tags `vX.Y.Z`, bouton « Mettre à jour ») —
+   [`docs/versions.md`](docs/versions.md).
 
 ## 2. Règles de reproduction (NE PAS DÉVIER)
 

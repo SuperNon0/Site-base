@@ -1,8 +1,13 @@
 """Opérations système : mise à jour Git + redémarrage du service, depuis l'UI.
 
 Inspiré de BotPanel. Le bouton « Mettre à jour » des Paramètres appelle :
-  - POST /api/system/update  → git fetch + reset --hard origin/<branche> + pip install
+  - POST /api/system/update  → passe à la dernière **version** (tag Git), pip install
   - POST /api/system/restart → redémarre le service systemd
+
+Modèle de versions : les releases sont des **tags** `vX.Y.Z` (v1.0.0, v1.1.0…).
+La mise à jour saute à la dernière version publiée. S'il n'existe encore aucun
+tag, on retombe sur la tête de la branche courante (pour que ça marche avant la
+première release). Un tag précis peut être visé (rollback) : {"ref": "v1.0.0"}.
 
 Prérequis serveur (posés par deploy/install_lxc.sh) :
   - /opt/site-base appartient à l'utilisateur du service (sitebase) → pas de sudo
@@ -13,11 +18,12 @@ Prérequis serveur (posés par deploy/install_lxc.sh) :
 
 from __future__ import annotations
 
+import re
 import shlex
 import subprocess
 from pathlib import Path
 
-from flask import Blueprint, current_app, jsonify, session
+from flask import Blueprint, jsonify, request, session
 
 from ..auth import super_admin_required
 
@@ -26,6 +32,24 @@ bp = Blueprint("system", __name__)
 # Racine du projet : panel/routes/system_routes.py → remonter de 2 niveaux.
 INSTALL_DIR = Path(__file__).resolve().parents[2]
 SERVICE_NAME = "site-base"
+
+# Un tag de version ressemble à v1, v1.2, v1.2.3 (préfixe « v » puis des chiffres).
+_VERSION_RE = re.compile(r"^v\d+(\.\d+)*$")
+
+
+def _version_tags() -> list[str]:
+    """Tags de version présents en local, du plus récent au plus ancien (semver)."""
+    out = _run(["git", "tag", "-l", "--sort=-v:refname"], 10)["stdout"]
+    return [t for t in out.split() if _VERSION_RE.match(t)]
+
+
+def _current_version() -> str | None:
+    """Version courante : tag exact si on est dessus, sinon description lisible."""
+    exact = _run(["git", "describe", "--tags", "--exact-match"], 5)
+    if exact["exit_code"] == 0 and exact["stdout"].strip():
+        return exact["stdout"].strip()
+    desc = _run(["git", "describe", "--tags", "--always"], 5)["stdout"].strip()
+    return desc or None
 
 
 def _run(cmd: list[str], timeout: float = 120.0) -> dict:
@@ -58,9 +82,9 @@ def _blocked_by_impersonation() -> bool:
 def info():
     is_git = (INSTALL_DIR / ".git").exists()
     data = {"install_dir": str(INSTALL_DIR), "is_git": is_git,
-            "commit": None, "branch": None, "service_active": None}
+            "version": None, "branch": None, "service_active": None}
     if is_git:
-        data["commit"] = _run(["git", "rev-parse", "--short", "HEAD"], 5)["stdout"].strip() or None
+        data["version"] = _current_version()
         data["branch"] = _run(["git", "rev-parse", "--abbrev-ref", "HEAD"], 5)["stdout"].strip() or None
     active = _run(["systemctl", "is-active", SERVICE_NAME], 5)
     data["service_active"] = (active["stdout"].strip() == "active") if active["exit_code"] >= 0 else None
@@ -75,21 +99,43 @@ def update():
     if not (INSTALL_DIR / ".git").exists():
         return jsonify({"ok": False, "error": f"{INSTALL_DIR} n'est pas un dépôt git."}), 400
 
-    branch = _run(["git", "rev-parse", "--abbrev-ref", "HEAD"], 5)["stdout"].strip() or "main"
-    remote_ref = f"origin/{branch}"
+    # Version visée : celle demandée (rollback), sinon la dernière version publiée.
+    requested = (request.get_json(silent=True) or {}).get("ref") if request.data else None
+    before = _current_version()
 
-    fetch = _run(["git", "fetch", "--prune", "origin"], 120)
+    # Récupère commits ET tags de version.
+    fetch = _run(["git", "fetch", "--tags", "--prune", "--force", "origin"], 120)
     if fetch["exit_code"] != 0:
         return jsonify({"ok": False, "fetch": fetch})
 
-    reset = _run(["git", "reset", "--hard", remote_ref], 60)
+    tags = _version_tags()
+    if requested:
+        if not _VERSION_RE.match(requested) or requested not in tags:
+            return jsonify({"ok": False, "error": f"Version inconnue : {requested}"}), 400
+        target, mode = requested, "tag"
+    elif tags:
+        target, mode = tags[0], "tag"  # la plus récente
+    else:
+        # Aucun tag encore : on suit la tête de la branche courante.
+        branch = _run(["git", "rev-parse", "--abbrev-ref", "HEAD"], 5)["stdout"].strip() or "main"
+        target, mode = f"origin/{branch}", "branch"
+
+    if mode == "tag":
+        checkout = _run(["git", "-c", "advice.detachedHead=false", "checkout", "--force", target], 60)
+    else:
+        checkout = _run(["git", "reset", "--hard", target], 60)
+
     pip = None
     venv_pip = INSTALL_DIR / ".venv" / "bin" / "pip"
-    if reset["exit_code"] == 0 and venv_pip.exists():
+    if checkout["exit_code"] == 0 and venv_pip.exists():
         pip = _run([str(venv_pip), "install", "-q", "-r", str(INSTALL_DIR / "requirements.txt")], 180)
 
-    ok = reset["exit_code"] == 0 and (pip is None or pip["exit_code"] == 0)
-    return jsonify({"ok": ok, "branch": branch, "fetch": fetch, "reset": reset, "pip": pip})
+    ok = checkout["exit_code"] == 0 and (pip is None or pip["exit_code"] == 0)
+    return jsonify({
+        "ok": ok, "mode": mode, "from": before, "to": (target if mode == "tag" else _current_version()),
+        "latest": tags[0] if tags else None,
+        "fetch": fetch, "checkout": checkout, "pip": pip,
+    })
 
 
 @bp.route("/api/system/restart", methods=["POST"])

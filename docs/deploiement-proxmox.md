@@ -230,14 +230,16 @@ curl -X POST "$BOTPANEL_URL/api/notify" \
 
 ### Bouton « Mettre à jour » depuis l'interface
 
-Connecté en super-admin, **Paramètres → Mise à jour** affiche la version en cours
-(branche + commit) et l'état du service. Le bouton **« Mettre à jour »** :
+Connecté en super-admin, **Paramètres → Mise à jour** affiche la **version en
+cours** (tag `vX.Y.Z`) et l'état du service. Le bouton **« Mettre à jour »** :
 
-1. `git fetch` + `git reset --hard origin/<branche>` (récupère la dernière version),
+1. `git fetch --tags` puis passage à la **dernière version publiée** (tag `vX.Y.Z`),
 2. `pip install -r requirements.txt` (met à jour les dépendances),
-3. redémarre le service, puis attend qu'il revienne et affiche la nouvelle version.
+3. redémarre le service, puis attend qu'il revienne et affiche `vX → vY`.
 
-Le journal des opérations s'affiche en direct sous le bouton.
+Le journal des opérations s'affiche en direct sous le bouton. Le modèle de
+versions (tags, publication, rollback) est décrit dans
+[`versions.md`](versions.md).
 
 **Prérequis (posés automatiquement par `install_lxc.sh`) :**
 - `/opt/site-base` appartient à l'utilisateur du service (`sitebase`) → `git`/`pip`
