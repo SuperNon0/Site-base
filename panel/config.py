@@ -42,16 +42,8 @@ class Config:
     # Mot de passe du compte super-admin joignable en LAN (login par mot de passe).
     # Défini une seule fois à l'amorce ; ensuite géré en base.
     SUPERADMIN_PASSWORD = os.getenv("SUPERADMIN_PASSWORD", "")
-    # E-mail Google du super-admin local (login LAN par mot de passe).
+    # E-mail Google du super-admin (celui autorisé dans Cloudflare Access).
     SUPERADMIN_EMAIL = os.getenv("SUPERADMIN_EMAIL", "")
-    # Liste PARTAGÉE des e-mails super-admin, honorée par TOUS les sites : mets la
-    # même valeur partout (idéalement dans le déploiement). Tout e-mail de cette
-    # liste est automatiquement élevé en super_admin actif sur chaque site.
-    # Séparés par des virgules ou des espaces.
-    _sa_emails = os.getenv("SUPERADMIN_EMAILS", "").replace(",", " ").split()
-    SUPERADMIN_EMAILS = {e.strip().lower() for e in _sa_emails if e.strip()}
-    if SUPERADMIN_EMAIL.strip():
-        SUPERADMIN_EMAILS.add(SUPERADMIN_EMAIL.strip().lower())
 
     # --- Cloudflare Zero Trust (Access) ---
     # Équipe Cloudflare : https://<team>.cloudflareaccess.com
