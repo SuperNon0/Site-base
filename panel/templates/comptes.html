@@ -1,9 +1,10 @@
 {% extends "base.html" %}
 {% block title %}Comptes — {{ brand.prefix }}{{ brand.suffix }}{% endblock %}
-{% block badge %}paramètres · comptes{% endblock %}
+{% block badge %}paramètres · {{ 'comptes' if can_manage else 'profils' }}{% endblock %}
 {% block content %}
 <div class="acct-wrap">
 
+  {% if can_manage %}
   <!-- -------------------------------------------- demandes en attente -->
   <section class="acct-section">
     <h3>Demandes en attente <span class="acct-count">· {{ pending|length }}</span></h3>
@@ -35,10 +36,11 @@
       {% endfor %}
     </div>
   </section>
+  {% endif %}
 
-  <!-- --------------------------------------------------------- membres -->
+  <!-- ------------------------------------------------- membres / profils -->
   <section class="acct-section">
-    <h3>Membres <span class="acct-count">· {{ membres|length }}</span></h3>
+    <h3>{{ 'Membres' if can_manage else 'Profils' }} <span class="acct-count">· {{ membres|length }}</span></h3>
     <div class="acct-list">
       {% for c in membres %}
       <div class="acct-row">
@@ -62,30 +64,34 @@
           {% endif %}
 
           {% if c.id != moi_id %}
-            {% if c.etat == 'actif' and c.role != 'super_admin' %}
+            {% if c.etat == 'actif' and c.role != 'super_admin' and can_impersonate %}
               <form method="post" action="{{ url_for('accounts.impersonate', compte_id=c.id) }}">
                 <button class="btn ghost small icon-btn">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
                   Voir en tant que
                 </button>
               </form>
+            {% endif %}
+            {% if can_manage %}
+              {% if c.etat == 'actif' and c.role != 'super_admin' %}
               <form method="post" action="{{ url_for('accounts.bloquer', compte_id=c.id) }}">
                 <button class="btn ghost small icon-btn">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></svg>
                   Bloquer
                 </button>
               </form>
-            {% elif c.etat == 'bloque' %}
+              {% elif c.etat == 'bloque' %}
               <form method="post" action="{{ url_for('accounts.debloquer', compte_id=c.id) }}">
                 <button class="btn ghost small">Débloquer</button>
               </form>
-            {% endif %}
-            {% if c.role != 'super_admin' %}
-            <form method="post" action="{{ url_for('accounts.supprimer', compte_id=c.id) }}" onsubmit="return confirm('Supprimer définitivement {{ c.email }} ?');">
-              <button class="btn danger small icon-btn" aria-label="Supprimer">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/></svg>
-              </button>
-            </form>
+              {% endif %}
+              {% if c.role != 'super_admin' %}
+              <form method="post" action="{{ url_for('accounts.supprimer', compte_id=c.id) }}" onsubmit="return confirm('Supprimer définitivement {{ c.email }} ?');">
+                <button class="btn danger small icon-btn" aria-label="Supprimer">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/></svg>
+                </button>
+              </form>
+              {% endif %}
             {% endif %}
           {% endif %}
         </div>

@@ -6,7 +6,7 @@
   <div style="display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:22px">
     <h1 style="font-size:1.9rem">Bienvenue{% if compte %}, {{ compte.email }}{% endif %}</h1>
     <div style="display:flex;gap:8px;align-items:center">
-      {% if is_super_admin %}
+      {% if any_admin_capability() %}
       <a class="btn ghost small" href="{{ url_for('accounts.parametres') }}">Paramètres</a>
       {% endif %}
       <a class="btn ghost small" href="{{ url_for('auth.logout') }}">Déconnexion</a>

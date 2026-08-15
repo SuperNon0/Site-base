@@ -36,6 +36,7 @@ def create_app(config_object: type = Config) -> Flask:
     @app.context_processor
     def inject_globals():
         from .auth import get_compte
+        from .permissions import any_admin_capability, has_capability
         impersonation = None
         if session.get("impersonator_id"):
             cible = get_compte(session.get("compte_id"))
@@ -48,6 +49,9 @@ def create_app(config_object: type = Config) -> Flask:
                 "badge": app.config["BRAND_BADGE"],
             },
             "impersonation": impersonation,
+            # Helpers de permissions dans les templates : can('site_update')…
+            "can": has_capability,
+            "any_admin_capability": any_admin_capability,
         }
 
     # --- Toutes les routes /api/* en no-store (spec §8) ---

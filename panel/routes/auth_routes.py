@@ -40,9 +40,23 @@ def gateway():
         return render_template("login.html")
 
     # --- Accès via Cloudflare : e-mail vérifié ---
+    from ..permissions import access_managed
     compte = _compte_par_email(email)
     if compte is None:
-        return render_template("demande.html", email=email)
+        if access_managed():
+            # Site « géré » (hub) : on crée une demande à valider.
+            return render_template("demande.html", email=email)
+        # Site « perso » : Cloudflare a déjà filtré → on crée l'accès en actif.
+        now = int(time.time())
+        db = get_db()
+        db.execute(
+            "INSERT INTO comptes (email, role, etat, cree, valide) "
+            "VALUES (?, 'membre', 'actif', ?, ?)",
+            (email, now, now),
+        )
+        db.commit()
+        audit("auto_provision", acteur=email, cible=email)
+        compte = _compte_par_email(email)
 
     etat = compte["etat"]
     if etat == "pending":
@@ -88,8 +102,10 @@ def login():
 @bp.route("/request-access", methods=["POST"])
 def request_access():
     """Crée (ou recrée) une demande `pending` pour l'e-mail Cloudflare courant."""
+    from ..permissions import access_managed
     email = cf_access_email()
-    if email is None:
+    if email is None or not access_managed():
+        # Sur un site perso, l'accès est auto-créé par le gateway : pas de demande.
         return redirect(url_for("auth.gateway"))
 
     db = get_db()

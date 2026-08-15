@@ -28,6 +28,9 @@ le login v2 et les notifications sont déjà en place, il n'y a qu'à ajouter le
   cycle de vie des comptes, désactivable via `.env`.
 - 🔄 **Mise à jour en un clic** — Paramètres → « Mettre à jour » (git + pip +
   redémarrage du service), en plus du changement de mot de passe admin.
+- 🧩 **Permissions par site** — chaque fonctionnalité (gestion des comptes, profils
+  + impersonation, mot de passe admin, mise à jour) a un niveau `super_admin` /
+  `membre` / `off`, **demandé à la création** (`python -m panel.setup`).
 - 📦 **Déploiement Proxmox** — script LXC + service systemd + tunnel Cloudflare.
 
 ## Démarrage rapide (dev local)
@@ -67,6 +70,7 @@ Maquettes de référence + captures : [`docs/maquettes-auth-v2/`](docs/maquettes
 - [`docs/authentification-v2.md`](docs/authentification-v2.md) — spec complète de l'auth.
 - [`docs/notifications-botpanel.md`](docs/notifications-botpanel.md) — intégration BotPanel.
 - [`docs/deploiement-proxmox.md`](docs/deploiement-proxmox.md) — guide Proxmox + Cloudflare.
+- [`docs/permissions.md`](docs/permissions.md) — permissions par site (demandées à la création).
 - [`docs/versions.md`](docs/versions.md) — versionnage (tags `vX.Y.Z`) & mises à jour.
 
 ## Stack

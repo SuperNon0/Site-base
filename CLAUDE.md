@@ -24,6 +24,8 @@ nouveau projet. Il fournit, prêts à l'emploi :
    [`docs/deploiement-proxmox.md`](docs/deploiement-proxmox.md).
 5. **Le versionnage & les mises à jour** (tags `vX.Y.Z`, bouton « Mettre à jour ») —
    [`docs/versions.md`](docs/versions.md).
+6. **Les permissions par site** (capabilities demandées à la création :
+   `super_admin` / `membre` / `off`) — [`docs/permissions.md`](docs/permissions.md).
 
 ## 2. Règles de reproduction (NE PAS DÉVIER)
 
@@ -47,6 +49,13 @@ nouveau projet. Il fournit, prêts à l'emploi :
 
 ## 3. Ce que TU personnalises pour un projet
 
+- **⚠️ Les permissions — À DEMANDER au propriétaire à la création du site.** Pour
+  **chaque** permission, demande son niveau (`super_admin` / `membre` / `off`) :
+  gestion des comptes, profils + « se mettre à leur place », changer le mot de
+  passe admin, bouton « Mettre à jour le site ». Renseigne les `CAP_*` dans `.env`
+  (ou lance `python -m panel.setup`). Voir [`docs/permissions.md`](docs/permissions.md).
+  Rappel : `CAP_ACCOUNT_MANAGEMENT=off` → site « perso » (accès auto en actif,
+  gestion des comptes au hub).
 - **La marque** via `.env` : `BRAND_PREFIX`, `BRAND_SUFFIX`, `BRAND_BADGE`, et le
   logo `panel/static/logo.svg` (garde le viewBox 44×44).
 - **Le contenu applicatif** : remplace `panel/templates/dashboard.html` et
@@ -83,6 +92,8 @@ panel/
   config.py           config depuis .env
   db.py               SQLite : schéma `comptes` + `audit`, amorce super-admin
   auth.py             Cloudflare Access (JWT), session, décorateurs
+  permissions.py      capabilities par site (off/membre/super_admin) + require_capability
+  setup.py            assistant : demande chaque permission, écrit .env (python -m panel.setup)
   notify.py           helper BotPanel notify(slug, **vars)
   reset_admin.py      CLI de réinitialisation du mdp super-admin (python -m panel.reset_admin)
   utils.py            format date FR
@@ -105,3 +116,4 @@ run.py / wsgi.py      entrées dev / prod (gunicorn)
 - [ ] `/api/*` renvoie `Cache-Control: no-store`.
 - [ ] `CF_VERIFY_JWT=true` et `SESSION_COOKIE_SECURE=true` en production.
 - [ ] Notifications BotPanel branchées sur les bons slugs.
+- [ ] Permissions demandées au propriétaire et renseignées (`CAP_*` / `panel.setup`).

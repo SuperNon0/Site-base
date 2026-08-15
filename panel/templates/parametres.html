@@ -4,6 +4,7 @@
 {% block content %}
 <div class="acct-wrap" style="max-width:560px">
 
+  {% if can('admin_password') %}
   <!-- ---------------------------------------- mot de passe administrateur -->
   <section class="acct-section">
     <h3>Mot de passe administrateur</h3>
@@ -45,17 +46,25 @@
       <code>sudo bash deploy/reset_admin.sh</code>
     </p>
   </section>
+  {% endif %}
 
-  <!-- ------------------------------------------------------------ comptes -->
+  {% if can('account_management') or can('profiles') %}
+  <!-- --------------------------------------------------- comptes / profils -->
   <section class="acct-section">
-    <h3>Comptes</h3>
+    <h3>{{ 'Comptes' if can('account_management') else 'Profils' }}</h3>
     <div class="fl-card" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
-      <span class="access-text" style="text-align:left;margin:0">Gérer les demandes
-        d'accès, les membres, les blocages et « voir en tant que ».</span>
+      <span class="access-text" style="text-align:left;margin:0">
+        {%- if can('account_management') %}Gérer les demandes d'accès, les membres,
+        les blocages et « voir en tant que ».
+        {%- else %}Voir les profils et te mettre à leur place pour consulter et
+        modifier leurs données.{% endif -%}
+      </span>
       <a class="btn ghost small" href="{{ url_for('accounts.comptes') }}">Ouvrir</a>
     </div>
   </section>
+  {% endif %}
 
+  {% if can('site_update') %}
   <!-- ------------------------------------------------------- mise à jour -->
   <section class="acct-section">
     <h3>Mise à jour</h3>
@@ -78,11 +87,14 @@
       <code>sudo bash deploy/update.sh</code>
     </p>
   </section>
+  {% endif %}
 </div>
 
+{% if can('site_update') %}
 <script>
 (function () {
   var btn = document.getElementById("upd-btn");
+  if (!btn) return;
   var log = document.getElementById("upd-log");
   var vEl = document.getElementById("upd-version");
   var sEl = document.getElementById("upd-state");
@@ -140,4 +152,5 @@
   refreshInfo();
 })();
 </script>
+{% endif %}
 {% endblock %}

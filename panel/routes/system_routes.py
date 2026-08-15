@@ -25,7 +25,7 @@ from pathlib import Path
 
 from flask import Blueprint, jsonify, request, session
 
-from ..auth import super_admin_required
+from ..permissions import require_capability
 
 bp = Blueprint("system", __name__)
 
@@ -78,7 +78,7 @@ def _blocked_by_impersonation() -> bool:
 
 
 @bp.route("/api/system/info")
-@super_admin_required
+@require_capability("site_update")
 def info():
     is_git = (INSTALL_DIR / ".git").exists()
     data = {"install_dir": str(INSTALL_DIR), "is_git": is_git,
@@ -92,7 +92,7 @@ def info():
 
 
 @bp.route("/api/system/update", methods=["POST"])
-@super_admin_required
+@require_capability("site_update")
 def update():
     if _blocked_by_impersonation():
         return jsonify({"ok": False, "error": "Reviens à ton compte avant de mettre à jour."}), 403
@@ -139,7 +139,7 @@ def update():
 
 
 @bp.route("/api/system/restart", methods=["POST"])
-@super_admin_required
+@require_capability("site_update")
 def restart():
     if _blocked_by_impersonation():
         return jsonify({"ok": False, "error": "Reviens à ton compte d'abord."}), 403

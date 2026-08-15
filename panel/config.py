@@ -55,6 +55,14 @@ class Config:
     # En dev local sans Cloudflare, autorise l'entrée locale par mot de passe.
     ALLOW_LOCAL_LOGIN = _bool("ALLOW_LOCAL_LOGIN", True)
 
+    # --- Permissions (capabilities) — à demander à la création du site ---
+    # Niveau par fonctionnalité : off | membre | super_admin (voir docs/permissions.md).
+    # account_management = off  →  site « perso » (auto-actif, gestion au hub).
+    CAP_ACCOUNT_MANAGEMENT = os.getenv("CAP_ACCOUNT_MANAGEMENT", "super_admin")
+    CAP_PROFILES = os.getenv("CAP_PROFILES", "super_admin")
+    CAP_ADMIN_PASSWORD = os.getenv("CAP_ADMIN_PASSWORD", "super_admin")
+    CAP_SITE_UPDATE = os.getenv("CAP_SITE_UPDATE", "super_admin")
+
     # --- Notifications BotPanel ---
     # Adresse du BotPanel (https://github.com/SuperNon0/botpanel).
     BOTPANEL_URL = os.getenv("BOTPANEL_URL", "")

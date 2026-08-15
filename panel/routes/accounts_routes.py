@@ -17,6 +17,8 @@ from ..auth import (current_compte, get_compte, is_super_admin,
                     login_required, super_admin_required)
 from ..db import audit, get_db
 from ..notify import notify
+from ..permissions import (any_admin_capability, has_capability,
+                           require_capability)
 from ..utils import fmt_dt
 
 bp = Blueprint("accounts", __name__)
@@ -33,17 +35,31 @@ def _row_to_view(row) -> dict:
 
 
 @bp.route("/parametres/comptes")
-@super_admin_required
+@login_required
 def comptes():
+    """Écran comptes/profils, adapté aux permissions du site.
+
+    - `account_management` : gestion complète (demandes, valider, bloquer…).
+    - `profiles` seul (site perso) : simple liste de profils + impersonation.
+    """
+    can_manage = has_capability("account_management")
+    can_impersonate = has_capability("profiles")
+    if not (can_manage or can_impersonate):
+        flash("Action non autorisée sur ce site.", "error")
+        return redirect(url_for("main.dashboard"))
+
     db = get_db()
-    pending = [_row_to_view(r) for r in db.execute(
-        "SELECT * FROM comptes WHERE etat = 'pending' ORDER BY cree DESC").fetchall()]
+    pending = []
+    if can_manage:
+        pending = [_row_to_view(r) for r in db.execute(
+            "SELECT * FROM comptes WHERE etat = 'pending' ORDER BY cree DESC").fetchall()]
     membres = [_row_to_view(r) for r in db.execute(
         "SELECT * FROM comptes WHERE etat IN ('actif', 'bloque') "
         "ORDER BY (role = 'super_admin') DESC, email").fetchall()]
-    # id du super-admin réel (même en impersonation) pour marquer « toi ».
     moi_id = session.get("impersonator_id") or session.get("compte_id")
-    return render_template("comptes.html", pending=pending, membres=membres, moi_id=moi_id)
+    return render_template("comptes.html", pending=pending, membres=membres,
+                           moi_id=moi_id, can_manage=can_manage,
+                           can_impersonate=can_impersonate)
 
 
 def _acteur() -> str:
@@ -53,8 +69,12 @@ def _acteur() -> str:
 
 # ── Paramètres : mot de passe administrateur ────────────────────────────────
 @bp.route("/parametres")
-@super_admin_required
+@login_required
 def parametres():
+    # Accessible dès qu'on a au moins une permission d'administration.
+    if not any_admin_capability():
+        flash("Action non autorisée sur ce site.", "error")
+        return redirect(url_for("main.dashboard"))
     # Compte super-admin réel (jamais l'identité impersonnée).
     moi = get_compte(session.get("impersonator_id") or session.get("compte_id"))
     return render_template(
@@ -65,7 +85,7 @@ def parametres():
 
 
 @bp.route("/parametres/mot-de-passe", methods=["POST"])
-@super_admin_required
+@require_capability("admin_password")
 def changer_mdp():
     # Interdit pendant une impersonation (on ne change pas le mdp d'un autre).
     if session.get("impersonator_id"):
@@ -98,7 +118,7 @@ def changer_mdp():
 
 
 @bp.route("/api/comptes/<int:compte_id>/valider", methods=["POST"])
-@super_admin_required
+@require_capability("account_management")
 def valider(compte_id: int):
     db = get_db()
     c = get_compte(compte_id)
@@ -113,7 +133,7 @@ def valider(compte_id: int):
 
 
 @bp.route("/api/comptes/<int:compte_id>/refuser", methods=["POST"])
-@super_admin_required
+@require_capability("account_management")
 def refuser(compte_id: int):
     db = get_db()
     c = get_compte(compte_id)
@@ -126,7 +146,7 @@ def refuser(compte_id: int):
 
 
 @bp.route("/api/comptes/<int:compte_id>/bloquer", methods=["POST"])
-@super_admin_required
+@require_capability("account_management")
 def bloquer(compte_id: int):
     db = get_db()
     c = get_compte(compte_id)
@@ -141,7 +161,7 @@ def bloquer(compte_id: int):
 
 
 @bp.route("/api/comptes/<int:compte_id>/debloquer", methods=["POST"])
-@super_admin_required
+@require_capability("account_management")
 def debloquer(compte_id: int):
     db = get_db()
     c = get_compte(compte_id)
@@ -155,7 +175,7 @@ def debloquer(compte_id: int):
 
 
 @bp.route("/api/comptes/<int:compte_id>/supprimer", methods=["POST"])
-@super_admin_required
+@require_capability("account_management")
 def supprimer(compte_id: int):
     db = get_db()
     c = get_compte(compte_id)
@@ -174,7 +194,7 @@ def supprimer(compte_id: int):
 
 # ── Impersonation « voir en tant que » (spec §6) ────────────────────────────
 @bp.route("/api/comptes/<int:compte_id>/impersonate", methods=["POST"])
-@super_admin_required
+@require_capability("profiles")
 def impersonate(compte_id: int):
     # Pas d'impersonation en cascade, ni d'un autre super-admin (spec §6).
     if session.get("impersonator_id"):
