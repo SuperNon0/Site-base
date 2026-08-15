@@ -27,10 +27,12 @@ def create_app(config_object: type = Config) -> Flask:
     from .routes.accounts_routes import bp as accounts_bp
     from .routes.main import bp as main_bp
     from .routes.system_routes import bp as system_bp
+    from .routes.sso_routes import bp as sso_bp
     app.register_blueprint(auth_bp)
     app.register_blueprint(accounts_bp)
     app.register_blueprint(main_bp)
     app.register_blueprint(system_bp)
+    app.register_blueprint(sso_bp)
 
     # --- Contexte de template partagé (marque + bandeau impersonation) ---
     @app.context_processor

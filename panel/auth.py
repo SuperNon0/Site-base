@@ -89,6 +89,18 @@ def cf_access_email() -> str | None:
     return email or None
 
 
+def effective_email() -> str | None:
+    """E-mail entrant selon le mode d'auth.
+
+    - sso_client : provient du cookie SSO partagé (émis par le hub).
+    - standalone / hub : provient de Cloudflare Access (en-tête + JWT vérifié).
+    """
+    if current_app.config.get("AUTH_MODE") == "sso_client":
+        from .sso import read_token
+        return read_token()
+    return cf_access_email()
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Comptes / session
 # ─────────────────────────────────────────────────────────────────────────────
