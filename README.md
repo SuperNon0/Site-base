@@ -24,8 +24,6 @@ le login v2 et les notifications sont déjà en place, il n'y a qu'à ajouter le
   journal d'audit.
 - ☁️ **Cloudflare Zero Trust** — e-mail Google comme portier, **vérification du
   JWT** `Cf-Access-Jwt-Assertion` + `aud`, login local par mot de passe en LAN.
-- 🔗 **SSO optionnel** — un seul login sur un site « hub », accès à tous les autres
-  (cookie de session signé partagé). Voir [`docs/sso-hub.md`](docs/sso-hub.md).
 - 🔔 **Notifications BotPanel** — helper `notify(slug, **vars)`, branché sur le
   cycle de vie des comptes, désactivable via `.env`.
 - 🔄 **Mise à jour en un clic** — Paramètres → « Mettre à jour » (git + pip +
@@ -69,7 +67,6 @@ Maquettes de référence + captures : [`docs/maquettes-auth-v2/`](docs/maquettes
 - [`docs/authentification-v2.md`](docs/authentification-v2.md) — spec complète de l'auth.
 - [`docs/notifications-botpanel.md`](docs/notifications-botpanel.md) — intégration BotPanel.
 - [`docs/deploiement-proxmox.md`](docs/deploiement-proxmox.md) — guide Proxmox + Cloudflare.
-- [`docs/sso-hub.md`](docs/sso-hub.md) — SSO : un seul login (hub) pour tous tes sites.
 - [`docs/versions.md`](docs/versions.md) — versionnage (tags `vX.Y.Z`) & mises à jour.
 
 ## Stack

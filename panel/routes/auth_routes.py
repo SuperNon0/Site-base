@@ -12,7 +12,7 @@ from flask import (Blueprint, current_app, flash, redirect, render_template,
                    request, session, url_for)
 from werkzeug.security import check_password_hash
 
-from ..auth import cf_access_email, effective_email, login_compte
+from ..auth import cf_access_email, login_compte
 from ..db import audit, get_db
 from ..notify import notify
 from ..utils import fmt_dt
@@ -26,25 +26,20 @@ def _compte_par_email(email: str):
 
 @bp.route("/gateway")
 def gateway():
-    """Point d'entrée : décide quelle page présenter selon le mode + l'état.
+    """Point d'entrée : décide quelle page présenter selon le canal + l'état.
 
-    - standalone / hub : e-mail via Cloudflare ; sinon login local (LAN).
-    - sso_client       : e-mail via le cookie SSO ; sinon rebond vers le hub.
-    Dans tous les cas, l'arbre de décision selon l'état du compte est identique.
+    - Pas d'e-mail Cloudflare (accès LAN) → login local par mot de passe.
+    - E-mail Cloudflare présent → arbre de décision selon l'état du compte.
     """
-    mode = current_app.config.get("AUTH_MODE", "standalone")
-    email = effective_email()
+    email = cf_access_email()
 
+    # --- Accès local / LAN : pas d'en-tête Cloudflare ---
     if email is None:
-        if mode == "sso_client":
-            # Pas de session partagée → on envoie l'utilisateur se connecter au hub.
-            from ..sso import hub_login_url
-            return redirect(hub_login_url(request.url))
         if not current_app.config.get("ALLOW_LOCAL_LOGIN", True):
             return render_template("bloque.html", email="—"), 403
         return render_template("login.html")
 
-    # --- E-mail vérifié (Cloudflare ou cookie SSO) : arbre de décision ---
+    # --- Accès via Cloudflare : e-mail vérifié ---
     compte = _compte_par_email(email)
     if compte is None:
         return render_template("demande.html", email=email)
@@ -92,8 +87,8 @@ def login():
 
 @bp.route("/request-access", methods=["POST"])
 def request_access():
-    """Crée (ou recrée) une demande `pending` pour l'e-mail entrant courant."""
-    email = effective_email()
+    """Crée (ou recrée) une demande `pending` pour l'e-mail Cloudflare courant."""
+    email = cf_access_email()
     if email is None:
         return redirect(url_for("auth.gateway"))
 
@@ -132,10 +127,4 @@ def forgot():
 @bp.route("/logout")
 def logout():
     session.clear()
-    # En mode client SSO, on va aussi purger le cookie partagé côté hub.
-    if current_app.config.get("AUTH_MODE") == "sso_client":
-        base = (current_app.config.get("SSO_HUB_URL") or "").rstrip("/")
-        if base:
-            from urllib.parse import quote
-            return redirect(f"{base}/sso/logout?next={quote(request.url_root, safe='')}")
     return redirect(url_for("auth.gateway"))

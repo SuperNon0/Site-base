@@ -45,25 +45,6 @@ class Config:
     # E-mail Google du super-admin (celui autorisé dans Cloudflare Access).
     SUPERADMIN_EMAIL = os.getenv("SUPERADMIN_EMAIL", "")
 
-    # --- Mode d'authentification (SSO) ---
-    # standalone : Cloudflare Access + login local (défaut, comportement v1.0.0).
-    # hub        : ce site EST le hub SSO — il authentifie via Cloudflare et émet
-    #              le cookie de session partagé pour tout le domaine.
-    # sso_client : ce site délègue au hub — l'identité vient du cookie partagé ;
-    #              pas de login local, on redirige vers le hub si absent.
-    AUTH_MODE = os.getenv("AUTH_MODE", "standalone")
-
-    # Secret HMAC partagé par le hub ET tous les clients (signe le cookie SSO).
-    SSO_SECRET = os.getenv("SSO_SECRET", "")
-    # Nom du cookie de session partagé.
-    SSO_COOKIE_NAME = os.getenv("SSO_COOKIE_NAME", "sso_session")
-    # Domaine parent qui porte le cookie (ex. « .super-nono.cc »). Vide = host-only.
-    SSO_COOKIE_DOMAIN = os.getenv("SSO_COOKIE_DOMAIN", "")
-    # URL du hub, vers laquelle un client redirige pour se connecter.
-    SSO_HUB_URL = os.getenv("SSO_HUB_URL", "")
-    # Durée de vie du jeton SSO (secondes). 12 h par défaut.
-    SSO_TTL = int(os.getenv("SSO_TTL", "43200"))
-
     # --- Cloudflare Zero Trust (Access) ---
     # Équipe Cloudflare : https://<team>.cloudflareaccess.com
     CF_ACCESS_TEAM_DOMAIN = os.getenv("CF_ACCESS_TEAM_DOMAIN", "")  # ex: monequipe

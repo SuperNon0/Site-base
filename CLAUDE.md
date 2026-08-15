@@ -24,9 +24,6 @@ nouveau projet. Il fournit, prêts à l'emploi :
    [`docs/deploiement-proxmox.md`](docs/deploiement-proxmox.md).
 5. **Le versionnage & les mises à jour** (tags `vX.Y.Z`, bouton « Mettre à jour ») —
    [`docs/versions.md`](docs/versions.md).
-6. **Le SSO optionnel** (un seul login « hub » → tous les sites) —
-   [`docs/sso-hub.md`](docs/sso-hub.md). Par défaut `AUTH_MODE=standalone`
-   (comportement inchangé) ; `hub` / `sso_client` l'activent par config.
 
 ## 2. Règles de reproduction (NE PAS DÉVIER)
 
