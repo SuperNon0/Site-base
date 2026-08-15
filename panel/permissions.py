@@ -36,7 +36,10 @@ CAPABILITIES: dict[str, tuple[str, str, str]] = {
     ),
     "profiles": (
         "Profils & « se mettre à leur place »",
-        "Voir les profils du site et les impersonner (voir/éditer leurs données).",
+        "Voir les profils et les impersonner (voir/éditer leurs données). "
+        "N'a de sens QUE si chaque utilisateur a ses PROPRES données (site "
+        "cloisonné : bibliothèque de films, suivi perso…). Sur un site à données "
+        "partagées (ex. le hub), mets-le sur `off`.",
         "super_admin",
     ),
     "admin_password": (

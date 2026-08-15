@@ -64,6 +64,47 @@
   </section>
   {% endif %}
 
+  {% if is_base_admin() %}
+  <!-- ---------------------------------------------------------- super-admins -->
+  <section class="acct-section">
+    <h3>Super-admins</h3>
+    <div class="fl-card" style="display:flex;flex-direction:column;gap:12px">
+      <p class="access-text" style="text-align:left;margin:0">Désigne un e-mail
+        comme super-admin. Seul <b style="color:var(--text)">le compte
+        administrateur de base</b> (toi) peut le faire.</p>
+      <form method="post" action="{{ url_for('accounts.ajouter_superadmin') }}"
+            style="display:flex;gap:8px;flex-wrap:wrap">
+        <input type="email" name="email" placeholder="email@gmail.com"
+               style="flex:1;min-width:200px" required>
+        <button type="submit" class="btn primary">Ajouter super-admin</button>
+      </form>
+
+      <div class="acct-list" style="margin-top:4px">
+        {% for s in superadmins %}
+        <div class="acct-row">
+          <div class="acct-av">{{ s.email[0]|upper if s.email else '?' }}</div>
+          <div class="acct-main">
+            <span class="acct-mail">{{ s.email or '(compte local)' }}</span>
+            <span class="acct-sub">
+              {%- if s.mdp_hash %}compte administrateur de base{% else %}super-admin (e-mail){% endif -%}
+            </span>
+          </div>
+          <div class="acct-actions">
+            <span class="role-badge role-super">super-admin</span>
+            {% if not s.mdp_hash and s.id != moi_id %}
+            <form method="post" action="{{ url_for('accounts.retirer_superadmin', compte_id=s.id) }}"
+                  onsubmit="return confirm('Retirer le rôle super-admin à {{ s.email }} ?');">
+              <button class="btn danger small">Retirer</button>
+            </form>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
   {% if can('site_update') %}
   <!-- ------------------------------------------------------- mise à jour -->
   <section class="acct-section">

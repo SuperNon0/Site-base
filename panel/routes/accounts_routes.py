@@ -13,7 +13,7 @@ from flask import (Blueprint, current_app, flash, redirect, render_template,
                    request, session, url_for)
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from ..auth import (current_compte, get_compte, is_super_admin,
+from ..auth import (current_compte, get_compte, is_base_admin, is_super_admin,
                     login_required, super_admin_required)
 from ..db import audit, get_db
 from ..notify import notify
@@ -71,17 +71,78 @@ def _acteur() -> str:
 @bp.route("/parametres")
 @login_required
 def parametres():
-    # Accessible dès qu'on a au moins une permission d'administration.
-    if not any_admin_capability():
+    # Accessible avec au moins une permission d'admin, ou pour le compte de base.
+    if not (any_admin_capability() or is_base_admin()):
         flash("Action non autorisée sur ce site.", "error")
         return redirect(url_for("main.dashboard"))
     # Compte super-admin réel (jamais l'identité impersonnée).
     moi = get_compte(session.get("impersonator_id") or session.get("compte_id"))
+    # Liste des super-admins « e-mail » (gérables par le compte de base).
+    superadmins = []
+    if is_base_admin():
+        superadmins = [dict(r) for r in get_db().execute(
+            "SELECT id, email, mdp_hash FROM comptes WHERE role = 'super_admin' "
+            "ORDER BY (mdp_hash IS NOT NULL) DESC, email").fetchall()]
     return render_template(
         "parametres.html",
         has_password=bool(moi and moi["mdp_hash"]),
         impersonating=bool(session.get("impersonator_id")),
+        superadmins=superadmins,
+        moi_id=moi["id"] if moi else None,
     )
+
+
+@bp.route("/parametres/super-admin/ajouter", methods=["POST"])
+@login_required
+def ajouter_superadmin():
+    """Désigne un e-mail comme super-admin. RÉSERVÉ au compte administrateur de base."""
+    if not is_base_admin():
+        flash("Seul le compte administrateur peut ajouter un super-admin.", "error")
+        return redirect(url_for("accounts.parametres"))
+    email = (request.form.get("email") or "").strip().lower()
+    if not email or "@" not in email:
+        flash("E-mail invalide.", "error")
+        return redirect(url_for("accounts.parametres"))
+
+    db = get_db()
+    now = int(time.time())
+    c = db.execute("SELECT * FROM comptes WHERE email = ?", (email,)).fetchone()
+    if c is None:
+        db.execute("INSERT INTO comptes (email, role, etat, cree, valide) "
+                   "VALUES (?, 'super_admin', 'actif', ?, ?)", (email, now, now))
+    else:
+        db.execute("UPDATE comptes SET role = 'super_admin', etat = 'actif', "
+                   "valide = COALESCE(valide, ?) WHERE id = ?", (now, c["id"]))
+    db.commit()
+    audit("ajouter_superadmin", _acteur(), email)
+    flash(f"{email} est désormais super-admin.", "success")
+    return redirect(url_for("accounts.parametres"))
+
+
+@bp.route("/parametres/super-admin/<int:compte_id>/retirer", methods=["POST"])
+@login_required
+def retirer_superadmin(compte_id: int):
+    """Retire le rôle super-admin d'un compte « e-mail ». RÉSERVÉ au compte de base."""
+    if not is_base_admin():
+        flash("Seul le compte administrateur peut retirer un super-admin.", "error")
+        return redirect(url_for("accounts.parametres"))
+    db = get_db()
+    c = get_compte(compte_id)
+    if c is None or c["role"] != "super_admin":
+        return redirect(url_for("accounts.parametres"))
+    if c["mdp_hash"]:
+        flash("Le compte administrateur de base n'est pas modifiable ici.", "error")
+        return redirect(url_for("accounts.parametres"))
+    # Ne jamais retirer le dernier super-admin.
+    n = db.execute("SELECT COUNT(*) FROM comptes WHERE role = 'super_admin'").fetchone()[0]
+    if n <= 1:
+        flash("Impossible : c'est le dernier super-admin.", "error")
+        return redirect(url_for("accounts.parametres"))
+    db.execute("UPDATE comptes SET role = 'membre' WHERE id = ?", (compte_id,))
+    db.commit()
+    audit("retirer_superadmin", _acteur(), c["email"])
+    flash(f"{c['email']} n'est plus super-admin.", "info")
+    return redirect(url_for("accounts.parametres"))
 
 
 @bp.route("/parametres/mot-de-passe", methods=["POST"])

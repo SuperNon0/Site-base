@@ -19,7 +19,7 @@ niveaux :
 | Clé (`.env`) | Fonctionnalité | Défaut |
 |---|---|---|
 | `CAP_ACCOUNT_MANAGEMENT` | Gestion des comptes : demandes d'accès, validation, refus, **blocage**, suppression, rôles. | `super_admin` |
-| `CAP_PROFILES` | Voir les profils du site + **« se mettre à leur place »** (impersonation) pour consulter/éditer leurs données. | `super_admin` |
+| `CAP_PROFILES` | **« Se mettre à leur place »** (impersonation) : voir/éditer les données d'un membre. **N'a de sens que sur un site à données cloisonnées** (chacun ses données : films, suivi perso…). Sur un site **à données partagées** (le hub), mets `off`. | `super_admin` |
 | `CAP_ADMIN_PASSWORD` | Changer le **mot de passe administrateur** dans les Paramètres. | `super_admin` |
 | `CAP_SITE_UPDATE` | Bouton **« Mettre à jour le site »** (git + pip + redémarrage) et `/api/system/*`. | `super_admin` |
 
@@ -40,8 +40,12 @@ Cette permission pilote aussi le **modèle d'accès** du site :
 
 | Preset | account_management | profiles | admin_password | site_update |
 |---|---|---|---|---|
-| `hub` (la home page) | super_admin | super_admin | super_admin | super_admin |
-| `perso` (site applicatif) | **off** | super_admin | super_admin | **off** |
+| `hub` (la home page, données **partagées**) | super_admin | **off** | super_admin | super_admin |
+| `perso` (site applicatif, données **cloisonnées**) | **off** | super_admin | super_admin | **off** |
+
+> **« Voir en tant que » = uniquement sur les sites à données non partagées.**
+> Impersonner quelqu'un n'a d'intérêt que si chacun a ses propres données. Sur le
+> hub (interface partagée), `CAP_PROFILES=off` retire le bouton.
 
 ## Exemples
 
@@ -56,6 +60,24 @@ CAP_SITE_UPDATE=off
 ```
 
 **La home page (hub)** : tout en `super_admin` (preset `hub`).
+
+## Qui est super-admin ? (le compte administrateur de base décide)
+
+Il y a **un compte administrateur « de base »** par site : le super-admin qui se
+connecte **en local avec le mot de passe** (amorcé par `SUPERADMIN_PASSWORD` /
+`SUPERADMIN_EMAIL`). C'est le compte racine.
+
+- **Lui seul** peut désigner d'autres super-admins : **Paramètres → Super-admins →
+  « Ajouter super-admin »** (par e-mail). Il peut aussi retirer le rôle à un
+  super-admin « e-mail ».
+- Un **super-admin « e-mail »** (venu par Cloudflare, sans mot de passe local)
+  **ne peut PAS** créer ni retirer de super-admin : il faut passer par le compte
+  de base.
+- Le compte de base n'est pas modifiable depuis l'UI, et le **dernier super-admin
+  reste indestructible**.
+
+Cette désignation est **par site** (dans sa table `comptes`). Sur un site perso,
+l'e-mail ajouté devient super-admin dès sa prochaine connexion.
 
 ## Dans le code
 

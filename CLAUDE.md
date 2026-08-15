@@ -55,7 +55,12 @@ nouveau projet. Il fournit, prêts à l'emploi :
   passe admin, bouton « Mettre à jour le site ». Renseigne les `CAP_*` dans `.env`
   (ou lance `python -m panel.setup`). Voir [`docs/permissions.md`](docs/permissions.md).
   Rappel : `CAP_ACCOUNT_MANAGEMENT=off` → site « perso » (accès auto en actif,
-  gestion des comptes au hub).
+  gestion des comptes au hub). `CAP_PROFILES` (« voir en tant que ») **uniquement
+  sur les sites à données cloisonnées** ; `off` sur un site à données partagées
+  (le hub).
+- **Les super-admins** se désignent depuis **Paramètres → Super-admins**, et
+  **seul le compte administrateur de base** (login local par mot de passe) peut le
+  faire ; un super-admin « e-mail » ne le peut pas.
 - **La marque** via `.env` : `BRAND_PREFIX`, `BRAND_SUFFIX`, `BRAND_BADGE`, et le
   logo `panel/static/logo.svg` (garde le viewBox 44×44).
 - **Le contenu applicatif** : remplace `panel/templates/dashboard.html` et

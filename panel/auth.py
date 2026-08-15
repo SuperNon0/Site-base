@@ -114,6 +114,17 @@ def is_super_admin() -> bool:
     return bool(c and c["role"] == "super_admin")
 
 
+def is_base_admin() -> bool:
+    """« Compte administrateur de base » : super-admin AVEC login local (mot de passe).
+
+    C'est le compte racine (amorcé par SUPERADMIN_PASSWORD). Lui seul peut désigner
+    d'autres super-admins ; un super-admin « e-mail » (mdp_hash NULL) ne le peut pas.
+    """
+    real_id = session.get("impersonator_id") or session.get("compte_id")
+    c = get_compte(real_id)
+    return bool(c and c["role"] == "super_admin" and c["mdp_hash"])
+
+
 def login_compte(compte_row) -> None:
     """Ouvre la session pour un compte actif et note la dernière connexion."""
     session.clear()

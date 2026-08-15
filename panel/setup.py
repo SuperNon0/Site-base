@@ -24,9 +24,9 @@ ENV_EXAMPLE = ROOT / ".env.example"
 
 # Presets : niveau de chaque capability.
 PRESETS = {
-    "hub": {  # la home page : gestion des comptes centralisée
+    "hub": {  # la home page : gestion des comptes centralisée, données partagées
         "account_management": "super_admin",
-        "profiles": "super_admin",
+        "profiles": "off",  # impersonation inutile sur un site à données partagées
         "admin_password": "super_admin",
         "site_update": "super_admin",
     },

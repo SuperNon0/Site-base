@@ -35,7 +35,7 @@ def create_app(config_object: type = Config) -> Flask:
     # --- Contexte de template partagé (marque + bandeau impersonation) ---
     @app.context_processor
     def inject_globals():
-        from .auth import get_compte
+        from .auth import get_compte, is_base_admin
         from .permissions import any_admin_capability, has_capability
         impersonation = None
         if session.get("impersonator_id"):
@@ -52,6 +52,7 @@ def create_app(config_object: type = Config) -> Flask:
             # Helpers de permissions dans les templates : can('site_update')…
             "can": has_capability,
             "any_admin_capability": any_admin_capability,
+            "is_base_admin": is_base_admin,
         }
 
     # --- Toutes les routes /api/* en no-store (spec §8) ---
