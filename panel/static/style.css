@@ -75,6 +75,10 @@ body {
   line-height: 1.5;
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
+  /* Comportement « app native » sur mobile : tap fluide (pas de délai ~300 ms),
+     pas de double-tap-zoom résiduel, pas de redimensionnement auto du texte iOS. */
+  touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
 }
 
 h1,
@@ -145,6 +149,14 @@ select:focus {
 input::placeholder,
 textarea::placeholder {
   color: var(--muted);
+}
+
+/* Anti-zoom iOS : iOS zoome automatiquement au focus d'un champ dont la police
+   fait moins de 16px. On force 16px min sur tous les champs pour l'empêcher. */
+input,
+select,
+textarea {
+  font-size: 16px !important;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────

@@ -36,6 +36,10 @@ nouveau projet. Il fournit, prêts à l'emploi :
   `no-store`, anti-force-brute) ne doit pas être affaiblie (spec §9).
 - **Les notifications passent par BotPanel** (`panel/notify.py`), jamais en
   appelant Discord directement.
+- **Comportement « app native » sur mobile** (anti-zoom) : garder le viewport
+  `maximum-scale=1.0, user-scalable=no` (dans `base.html`), les champs à `16px`
+  minimum et `touch-action: manipulation` sur `body`. Voir
+  [`docs/mobile-anti-zoom.md`](docs/mobile-anti-zoom.md).
 
 ## 3. Ce que TU personnalises pour un projet
 
