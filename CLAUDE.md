@@ -2,6 +2,10 @@
 
 > Ce fichier est lu en premier par l'assistant qui reprend ce dépôt. Il fixe le
 > **contrat** : ce qui doit être reproduit **à l'identique**, et ce qui est libre.
+>
+> 📖 Pour **comprendre le code** (architecture, rôle de chaque fichier, pourquoi
+> chaque choix, et comment étendre le socle), lis
+> [`docs/guide-developpeur.md`](docs/guide-developpeur.md).
 
 ## 1. Ce qu'est ce dépôt
 

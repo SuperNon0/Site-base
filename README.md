@@ -62,6 +62,7 @@ Maquettes de référence + captures : [`docs/maquettes-auth-v2/`](docs/maquettes
 ## Documentation
 
 - [`CLAUDE.md`](CLAUDE.md) — contrat de reproduction (à lire en premier).
+- [`docs/guide-developpeur.md`](docs/guide-developpeur.md) — **comprendre le code** (architecture, rôle de chaque fichier, pourquoi, recettes d'extension).
 - [`docs/theme-recipelog.md`](docs/theme-recipelog.md) — cahier des charges du thème.
 - [`docs/authentification-v2.md`](docs/authentification-v2.md) — spec complète de l'auth.
 - [`docs/notifications-botpanel.md`](docs/notifications-botpanel.md) — intégration BotPanel.
