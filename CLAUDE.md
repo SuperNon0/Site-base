@@ -56,6 +56,9 @@ nouveau projet. Il fournit, prêts à l'emploi :
   (ou lance `python -m panel.setup`). Voir [`docs/permissions.md`](docs/permissions.md).
   Rappel : `CAP_ACCOUNT_MANAGEMENT=off` → site « perso » (accès auto en actif,
   gestion des comptes au hub).
+- **Les super-admins** se définissent **une fois** via `SUPERADMIN_EMAILS` (même
+  liste sur tous les sites) : ces e-mails sont élevés en `super_admin` actif sur
+  chaque site automatiquement. Voir [`docs/permissions.md`](docs/permissions.md).
 - **La marque** via `.env` : `BRAND_PREFIX`, `BRAND_SUFFIX`, `BRAND_BADGE`, et le
   logo `panel/static/logo.svg` (garde le viewBox 44×44).
 - **Le contenu applicatif** : remplace `panel/templates/dashboard.html` et

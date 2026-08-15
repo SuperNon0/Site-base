@@ -24,6 +24,36 @@ def _compte_par_email(email: str):
     return get_db().execute("SELECT * FROM comptes WHERE email = ?", (email,)).fetchone()
 
 
+def _reconcile_superadmin(email: str) -> None:
+    """Élève un e-mail de la liste partagée `SUPERADMIN_EMAILS` en super_admin actif.
+
+    Appelé sur CHAQUE site : un super-admin désigné (défini une fois, même liste
+    partout) est reconnu partout automatiquement, sans passer par « demande » et
+    sans pouvoir être bloqué localement.
+    """
+    if email not in current_app.config.get("SUPERADMIN_EMAILS", set()):
+        return
+    db = get_db()
+    now = int(time.time())
+    c = _compte_par_email(email)
+    if c is None:
+        db.execute(
+            "INSERT INTO comptes (email, role, etat, cree, valide) "
+            "VALUES (?, 'super_admin', 'actif', ?, ?)",
+            (email, now, now),
+        )
+        db.commit()
+        audit("superadmin_auto", acteur=email, cible=email)
+    elif c["role"] != "super_admin" or c["etat"] != "actif":
+        db.execute(
+            "UPDATE comptes SET role = 'super_admin', etat = 'actif', "
+            "valide = COALESCE(valide, ?) WHERE id = ?",
+            (now, c["id"]),
+        )
+        db.commit()
+        audit("superadmin_auto", acteur=email, cible=email)
+
+
 @bp.route("/gateway")
 def gateway():
     """Point d'entrée : décide quelle page présenter selon le canal + l'état.
@@ -41,6 +71,8 @@ def gateway():
 
     # --- Accès via Cloudflare : e-mail vérifié ---
     from ..permissions import access_managed
+    # Super-admin désigné (liste partagée) → élevé/reconnu sur ce site.
+    _reconcile_superadmin(email)
     compte = _compte_par_email(email)
     if compte is None:
         if access_managed():

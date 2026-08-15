@@ -57,6 +57,33 @@ CAP_SITE_UPDATE=off
 
 **La home page (hub)** : tout en `super_admin` (preset `hub`).
 
+## Qui est super-admin ? (défini une fois, appliqué partout)
+
+Le rôle `super_admin` est stocké **par site**, mais tu n'as pas à le régler site
+par site : une **liste partagée** d'e-mails, la même sur tous les sites, suffit.
+
+```env
+# La MÊME valeur sur chaque site (idéalement posée par le déploiement)
+SUPERADMIN_EMAILS=toi@gmail.com, autre-admin@gmail.com
+```
+
+À chaque connexion, tout e-mail de cette liste est **automatiquement élevé en
+`super_admin` actif** sur le site courant :
+
+- sur un **site perso**, il devient super-admin au lieu de simple membre ;
+- sur un **hub**, il entre directement (pas de « demander un accès ») ;
+- un membre existant ajouté à la liste est **promu** à sa prochaine connexion ;
+- un super-admin désigné **ne peut pas être bloqué** localement (il est ré-activé).
+
+> C'est la réponse à « je définis mes super-admins au même endroit et ça
+> s'applique partout » : tu maintiens **une seule liste**, déployée à l'identique.
+> (`SUPERADMIN_EMAIL` + `SUPERADMIN_PASSWORD` restent, eux, pour le **login local
+> LAN** par mot de passe.)
+>
+> Variante entièrement dynamique (ajouter/retirer un super-admin depuis l'UI du
+> hub, sans redéployer) : possible en faisant interroger le hub par les sites —
+> non implémenté ici, à demander si besoin.
+
 ## Dans le code
 
 - `panel/permissions.py` — registre des capabilities, `capability_level()`,
