@@ -96,7 +96,8 @@ panel/
   __init__.py         app factory (blueprints, contexte, no-store)
   config.py           config depuis .env
   db.py               SQLite : schéma `comptes` + `audit`, amorce super-admin
-  auth.py             Cloudflare Access (JWT), session, décorateurs
+  auth.py             Cloudflare Access (JWT + diagnostic), session, décorateurs
+  settings.py         réglages en base (app_settings) : cf_config() prioritaire sur .env
   permissions.py      capabilities par site (off/membre/super_admin) + require_capability
   setup.py            assistant : demande chaque permission, écrit .env (python -m panel.setup)
   notify.py           helper BotPanel notify(slug, **vars)

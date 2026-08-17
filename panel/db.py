@@ -35,6 +35,12 @@ CREATE TABLE IF NOT EXISTS audit (
     cible         TEXT,        -- e-mail / id concerné
     detail        TEXT
 );
+
+-- Réglages éditables depuis l'UI (prioritaires sur .env). Voir panel/settings.py.
+CREATE TABLE IF NOT EXISTS app_settings (
+    cle           TEXT PRIMARY KEY,
+    valeur        TEXT
+);
 """
 
 
@@ -80,9 +86,19 @@ def _seed_superadmin(db: sqlite3.Connection) -> None:
     email = (cfg.get("SUPERADMIN_EMAIL") or "").strip().lower() or None
     password = cfg.get("SUPERADMIN_PASSWORD") or ""
 
-    row = db.execute("SELECT id FROM comptes WHERE role = 'super_admin' LIMIT 1").fetchone()
+    row = db.execute(
+        "SELECT id, email FROM comptes WHERE role = 'super_admin' ORDER BY id LIMIT 1"
+    ).fetchone()
     if row is not None:
-        return  # déjà amorcé
+        # Déjà amorcé — mais si le super-admin n'a pas d'e-mail et qu'on en fournit
+        # un, on le rattache (reconnaissance via Google/Cloudflare).
+        if email and not row["email"]:
+            existing = db.execute("SELECT id FROM comptes WHERE email = ?", (email,)).fetchone()
+            if existing is None:
+                db.execute("UPDATE comptes SET email = ? WHERE id = ?", (email, row["id"]))
+                db.commit()
+                current_app.logger.info("E-mail %s rattaché au super-admin de base.", email)
+        return
 
     if not password and not email:
         current_app.logger.warning(

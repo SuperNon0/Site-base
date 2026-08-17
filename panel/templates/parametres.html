@@ -105,6 +105,63 @@
   </section>
   {% endif %}
 
+  {% if cf %}
+  <!-- ------------------------------------------------------ Cloudflare / Accès -->
+  <section class="acct-section">
+    <h3>Cloudflare / Accès</h3>
+    <div class="fl-card">
+      <form method="post" action="{{ url_for('accounts.cloudflare_settings') }}"
+            style="display:flex;flex-direction:column;gap:12px">
+        <div>
+          <label class="fl-label" for="cf-team">Équipe (nom seul, ex. super-nono)</label>
+          <input id="cf-team" type="text" name="team" value="{{ cf.team }}"
+                 placeholder="super-nono" style="margin-top:6px">
+        </div>
+        <div>
+          <label class="fl-label" for="cf-aud">AUD (Application Audience tag)</label>
+          <input id="cf-aud" type="text" name="aud" value="{{ cf.aud }}" style="margin-top:6px">
+        </div>
+        <label style="display:flex;align-items:center;gap:8px;font-size:0.8rem">
+          <input type="checkbox" name="verify" value="1" {{ 'checked' if cf.verify }}
+                 style="width:auto">
+          Vérifier le JWT Cloudflare (recommandé en production)
+        </label>
+        <div style="display:flex;justify-content:flex-end">
+          <button type="submit" class="btn primary">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------------ diagnostic -->
+  <section class="acct-section">
+    <h3>Diagnostic</h3>
+    <div class="fl-card acct-list">
+      <div class="acct-row"><span class="acct-main"><span class="acct-mail">Jeton Cloudflare reçu</span></span>
+        <span class="role-badge {{ 'role-admin' if diag.has_token else 'role-bloque' }}">{{ 'oui' if diag.has_token else 'non' }}</span></div>
+      <div class="acct-row"><span class="acct-main"><span class="acct-mail">En-tête e-mail</span></span>
+        <span class="acct-sub">{{ diag.header_email or '—' }}</span></div>
+      <div class="acct-row"><span class="acct-main"><span class="acct-mail">Équipe / AUD</span></span>
+        <span class="acct-sub">{{ diag.team or '—' }} / {{ diag.aud or '—' }}</span></div>
+      <div class="acct-row"><span class="acct-main"><span class="acct-mail">Vérification JWT</span></span>
+        <span class="role-badge {{ 'role-super' if diag.jwt_status.startswith('OK') else ('role-bloque' if diag.jwt_status.startswith('échec') else 'role-membre') }}">{{ diag.jwt_status }}</span></div>
+      {% if diag.jwt_email %}
+      <div class="acct-row"><span class="acct-main"><span class="acct-mail">E-mail du jeton</span></span>
+        <span class="acct-sub">{{ diag.jwt_email }}</span></div>
+      {% endif %}
+      {% if diag.jwt_error %}
+      <div class="acct-row"><span class="acct-main"><span class="acct-mail">Détail</span>
+        <span class="acct-sub">{{ diag.jwt_error }}</span></span></div>
+      {% endif %}
+    </div>
+    <p class="access-note" style="text-align:left;margin-top:8px">
+      « non testé » = pas de jeton (l'origine n'est peut-être pas derrière Access).
+      Erreur « …cloudflareaccess.com.cloudflareaccess.com » → mets le <b>nom seul</b>
+      dans Équipe. Erreur « audience » → l'AUD ne correspond pas à l'app Access.
+    </p>
+  </section>
+  {% endif %}
+
   {% if can('site_update') %}
   <!-- ------------------------------------------------------- mise à jour -->
   <section class="acct-section">

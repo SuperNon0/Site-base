@@ -179,7 +179,20 @@ Dans le dashboard **Zero Trust → Access → Applications** :
 5. `CF_ACCESS_TEAM_DOMAIN` = le sous-domaine de ton équipe (la partie `<equipe>`
    de `https://<equipe>.cloudflareaccess.com`).
 
-Redémarre le site après avoir renseigné ces deux valeurs :
+Tu peux renseigner l'**équipe**, l'**AUD** et la **vérification JWT** de deux façons :
+
+- **Depuis l'UI (recommandé)** : connecté en super-admin →
+  **Paramètres → Cloudflare / Accès**. Ces réglages sont stockés en base et
+  **priment sur le `.env`**. Le champ **Équipe** accepte le nom seul
+  (`super-nono`) *ou* le domaine complet — il est normalisé automatiquement.
+- **Ou dans `.env`** : `CF_ACCESS_TEAM_DOMAIN`, `CF_ACCESS_AUD`, `CF_VERIFY_JWT`
+  (valeurs de secours si rien n'est réglé dans l'UI).
+
+Un écran **Paramètres → Diagnostic** montre en direct : jeton reçu (oui/non),
+e-mail d'en-tête, équipe/AUD, et le résultat de la vérif JWT (`OK ✓` / `échec ✗`)
+avec le détail de l'erreur — pratique pour régler la configuration Access.
+
+Après un changement dans `.env` (pas nécessaire pour l'UI), recharge le site :
 
 ```bash
 systemctl restart site-base
@@ -235,29 +248,24 @@ cours** (tag `vX.Y.Z`) et l'état du service. Le bouton **« Mettre à jour »**
 
 1. `git fetch --tags` puis passage à la **dernière version publiée** (tag `vX.Y.Z`),
 2. `pip install -r requirements.txt` (met à jour les dépendances),
-3. redémarre le service, puis attend qu'il revienne et affiche `vX → vY`.
+3. **recharge le service** (SIGHUP à gunicorn), puis affiche `vX → vY`.
 
 Le journal des opérations s'affiche en direct sous le bouton. Le modèle de
 versions (tags, publication, rollback) est décrit dans
 [`versions.md`](versions.md).
 
-**Prérequis (posés automatiquement par `install_lxc.sh`) :**
+**Aucun sudo requis :**
 - `/opt/site-base` appartient à l'utilisateur du service (`sitebase`) → `git`/`pip`
   se font **sans sudo**.
-- Une règle sudoers autorise **uniquement** le redémarrage du service sans mot de
-  passe :
-
-  ```
-  sitebase ALL=NOPASSWD: /bin/systemctl restart site-base
-  ```
-
-  (fichier `/etc/sudoers.d/site-base`). Rien d'autre n'est autorisé en sudo.
+- Le rechargement se fait par **`SIGHUP` au master gunicorn** : le service se
+  recharge **lui-même** (nouveaux workers avec le code à jour), sans coupure et
+  **sans sudoers**.
 
 > Endpoints correspondants (super-admin, `/api/*` en `no-store`, bloqués pendant
 > une impersonation) : `GET /api/system/info`, `POST /api/system/update`,
 > `POST /api/system/restart` — voir `panel/routes/system_routes.py`.
-> En dev local (hors systemd), la mise à jour Git/pip fonctionne mais le
-> redémarrage automatique n'a pas lieu (relance `python run.py` à la main).
+> En dev local (hors gunicorn), la mise à jour Git/pip fonctionne mais le
+> rechargement automatique n'a pas lieu (relance `python run.py` à la main).
 
 ### Changer / réinitialiser le mot de passe admin
 

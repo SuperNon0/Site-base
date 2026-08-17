@@ -18,8 +18,10 @@ Prérequis serveur (posés par deploy/install_lxc.sh) :
 
 from __future__ import annotations
 
+import os
 import re
 import shlex
+import signal
 import subprocess
 from pathlib import Path
 
@@ -138,17 +140,32 @@ def update():
     })
 
 
+def _gunicorn_master_pid() -> int | None:
+    """PID du master gunicorn (le parent), si on tourne bien sous gunicorn."""
+    ppid = os.getppid()
+    try:
+        with open(f"/proc/{ppid}/cmdline", "rb") as f:
+            cmdline = f.read().decode("utf-8", "replace")
+        if "gunicorn" in cmdline:
+            return ppid
+    except OSError:
+        pass
+    return None
+
+
 @bp.route("/api/system/restart", methods=["POST"])
 @require_capability("site_update")
 def restart():
     if _blocked_by_impersonation():
         return jsonify({"ok": False, "error": "Reviens à ton compte d'abord."}), 403
-    # Redémarrage détaché (laisse le temps de répondre avant que systemd coupe).
-    try:
-        subprocess.Popen(
-            ["bash", "-c", f"sleep 1; sudo systemctl restart {SERVICE_NAME}"],
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-        )
-    except Exception as exc:  # pragma: no cover
-        return jsonify({"ok": False, "error": str(exc)}), 500
-    return jsonify({"ok": True, "status": "restarting"})
+    # Rechargement gracieux : SIGHUP au master gunicorn → nouveaux workers avec le
+    # code à jour, sans sudo ni coupure. (Le master relit et relance les workers.)
+    master = _gunicorn_master_pid()
+    if master:
+        try:
+            os.kill(master, signal.SIGHUP)
+        except OSError as exc:
+            return jsonify({"ok": False, "error": str(exc)}), 500
+        return jsonify({"ok": True, "status": "reloading"})
+    # Repli (hors gunicorn, ex. dev) : rien à recharger automatiquement.
+    return jsonify({"ok": False, "error": "Hors gunicorn : relance le service à la main."}), 200

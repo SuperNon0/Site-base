@@ -28,58 +28,61 @@ except Exception:  # pragma: no cover
     jwt = None
     PyJWKClient = None
 
-_jwk_client = None
+# Cache des clients JWK, PAR équipe (la config peut changer via l'UI).
+_jwk_clients: dict[str, "PyJWKClient"] = {}
 
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Cloudflare Access
 # ─────────────────────────────────────────────────────────────────────────────
-def _get_jwk_client() -> "PyJWKClient | None":
-    global _jwk_client
-    if _jwk_client is not None:
-        return _jwk_client
-    team = current_app.config.get("CF_ACCESS_TEAM_DOMAIN", "")
+def _get_jwk_client(team: str) -> "PyJWKClient | None":
     if not team or PyJWKClient is None:
         return None
-    certs_url = f"https://{team}.cloudflareaccess.com/cdn-cgi/access/certs"
-    _jwk_client = PyJWKClient(certs_url)
-    return _jwk_client
+    client = _jwk_clients.get(team)
+    if client is None:
+        certs_url = f"https://{team}.cloudflareaccess.com/cdn-cgi/access/certs"
+        client = PyJWKClient(certs_url)
+        _jwk_clients[team] = client
+    return client
+
+
+def _cf_token() -> str | None:
+    """Jeton Cloudflare : en-tête `Cf-Access-Jwt-Assertion` ou cookie `CF_Authorization`."""
+    return (request.headers.get("Cf-Access-Jwt-Assertion")
+            or request.cookies.get("CF_Authorization"))
 
 
 def cf_access_email() -> str | None:
     """E-mail Cloudflare vérifié pour la requête courante, sinon None.
 
-    - Si CF_VERIFY_JWT (défaut) : valide le JWT et l'`aud`, renvoie l'e-mail
-      contenu dans le token. Un en-tête forgé sans JWT valide est ignoré.
-    - Si CF_VERIFY_JWT=false (ex. origine déjà rendue injoignable sans CF) :
-      se contente de l'en-tête `Cf-Access-Authenticated-User-Email`.
+    Configuration lue via `settings.cf_config()` (UI prioritaire, puis `.env`).
+    - Si `verify` (défaut) : valide le JWT (RS256) + `aud` + `iss`, renvoie
+      l'e-mail du token. Un en-tête forgé sans JWT valide est ignoré.
+    - Sinon : se contente de l'en-tête `Cf-Access-Authenticated-User-Email`.
     """
+    from .settings import cf_config
+    cfg = cf_config()
     header_email = request.headers.get("Cf-Access-Authenticated-User-Email")
-    token = request.headers.get("Cf-Access-Jwt-Assertion")
 
-    if not current_app.config.get("CF_VERIFY_JWT", True):
+    if not cfg["verify"]:
         return header_email.strip().lower() if header_email else None
 
+    token = _cf_token()
     if not token or jwt is None:
         return None
-
-    client = _get_jwk_client()
-    aud = current_app.config.get("CF_ACCESS_AUD", "")
-    team = current_app.config.get("CF_ACCESS_TEAM_DOMAIN", "")
+    team, aud = cfg["team"], cfg["aud"]
+    client = _get_jwk_client(team)
     if client is None or not aud or not team:
         current_app.logger.warning(
-            "CF_VERIFY_JWT actif mais CF_ACCESS_TEAM_DOMAIN / CF_ACCESS_AUD manquant."
+            "Vérif JWT active mais équipe/AUD Cloudflare non renseignés."
         )
         return None
 
     try:
         signing_key = client.get_signing_key_from_jwt(token)
         claims = jwt.decode(
-            token,
-            signing_key.key,
-            algorithms=["RS256"],
-            audience=aud,
-            issuer=f"https://{team}.cloudflareaccess.com",
+            token, signing_key.key, algorithms=["RS256"],
+            audience=aud, issuer=f"https://{team}.cloudflareaccess.com",
         )
     except Exception as exc:  # signature invalide, expiré, aud/iss faux…
         current_app.logger.warning("JWT Cloudflare rejeté : %s", exc)
@@ -87,6 +90,45 @@ def cf_access_email() -> str | None:
 
     email = (claims.get("email") or "").strip().lower()
     return email or None
+
+
+def cf_diagnostic() -> dict:
+    """Diagnostic de la connexion Cloudflare (affiché dans Paramètres).
+
+    Renvoie : team, aud, verify, header_email, has_token, jwt_status
+    (« non testé » | « OK ✓ » | « échec ✗ »), jwt_email, jwt_error.
+    """
+    from .settings import cf_config
+    cfg = cf_config()
+    header_email = request.headers.get("Cf-Access-Authenticated-User-Email")
+    token = _cf_token()
+    d = {
+        "team": cfg["team"], "aud": cfg["aud"], "verify": cfg["verify"],
+        "header_email": header_email, "has_token": bool(token),
+        "jwt_status": "non testé", "jwt_email": None, "jwt_error": None,
+    }
+    if not token:
+        d["jwt_error"] = "Aucun jeton Cloudflare reçu (l'origine n'est peut-être pas derrière Access)."
+        return d
+    if not cfg["team"] or not cfg["aud"]:
+        d["jwt_error"] = "Équipe et/ou AUD non renseignés."
+        return d
+    if jwt is None:
+        d["jwt_error"] = "PyJWT indisponible."
+        return d
+    try:
+        client = _get_jwk_client(cfg["team"])
+        signing_key = client.get_signing_key_from_jwt(token)
+        claims = jwt.decode(
+            token, signing_key.key, algorithms=["RS256"],
+            audience=cfg["aud"], issuer=f"https://{cfg['team']}.cloudflareaccess.com",
+        )
+        d["jwt_status"] = "OK ✓"
+        d["jwt_email"] = (claims.get("email") or "").strip().lower() or None
+    except Exception as exc:
+        d["jwt_status"] = "échec ✗"
+        d["jwt_error"] = str(exc)
+    return d
 
 
 # ─────────────────────────────────────────────────────────────────────────────

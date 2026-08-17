@@ -83,13 +83,37 @@ def parametres():
         superadmins = [dict(r) for r in get_db().execute(
             "SELECT id, email, mdp_hash FROM comptes WHERE role = 'super_admin' "
             "ORDER BY (mdp_hash IS NOT NULL) DESC, email").fetchall()]
+    # Cloudflare / Accès + diagnostic : réservés au super-admin.
+    cf = diag = None
+    if is_super_admin():
+        from ..settings import cf_config
+        from ..auth import cf_diagnostic
+        cf = cf_config()
+        diag = cf_diagnostic()
     return render_template(
         "parametres.html",
         has_password=bool(moi and moi["mdp_hash"]),
         impersonating=bool(session.get("impersonator_id")),
         superadmins=superadmins,
         moi_id=moi["id"] if moi else None,
+        cf=cf, diag=diag,
     )
+
+
+@bp.route("/parametres/cloudflare", methods=["POST"])
+@login_required
+def cloudflare_settings():
+    """Enregistre la config Cloudflare (équipe/AUD/vérif). Super-admin uniquement."""
+    if not is_super_admin():
+        flash("Réservé au super-admin.", "error")
+        return redirect(url_for("accounts.parametres"))
+    from ..settings import normalize_team, set_setting
+    set_setting("cf_team", normalize_team(request.form.get("team", "")))
+    set_setting("cf_aud", (request.form.get("aud", "") or "").strip())
+    set_setting("cf_verify", "1" if request.form.get("verify") else "0")
+    audit("cf_settings", _acteur())
+    flash("Configuration Cloudflare enregistrée.", "success")
+    return redirect(url_for("accounts.parametres"))
 
 
 @bp.route("/parametres/super-admin/ajouter", methods=["POST"])

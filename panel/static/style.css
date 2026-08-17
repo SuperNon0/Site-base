@@ -298,9 +298,17 @@ textarea {
 .login-page {
   min-height: 100vh;
   display: flex;
+  flex-direction: column; /* flash au-dessus de la carte, pas à côté */
   align-items: center;
   justify-content: center;
+  gap: 12px;
   padding: 24px;
+}
+.login-page .flash-stack {
+  width: 100%;
+  max-width: 430px;
+  margin: 0;
+  padding: 0;
 }
 .login-card {
   width: 100%;
