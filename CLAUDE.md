@@ -26,6 +26,33 @@ nouveau projet. Il fournit, prêts à l'emploi :
    [`docs/versions.md`](docs/versions.md).
 6. **Les permissions par site** (capabilities demandées à la création :
    `super_admin` / `membre` / `off`) — [`docs/permissions.md`](docs/permissions.md).
+7. **La config Cloudflare éditable dans l'UI + un écran Diagnostic**
+   (Paramètres → « Cloudflare / Accès » et « Diagnostic »), réglages stockés en
+   base (`app_settings`, prioritaires sur `.env`) — voir `panel/settings.py`.
+
+### Toute la documentation (à lire selon le besoin)
+
+| Fichier | Pour quoi |
+|---|---|
+| [`docs/guide-developpeur.md`](docs/guide-developpeur.md) | **Comprendre le code** : architecture, rôle de chaque fichier, *pourquoi*, recettes d'extension. |
+| [`docs/authentification-v2.md`](docs/authentification-v2.md) | Spec fonctionnelle de l'auth (états, rôles, sécurité §9). |
+| [`docs/theme-recipelog.md`](docs/theme-recipelog.md) | Cahier des charges du thème (tokens, classes `fl-*`). |
+| [`docs/permissions.md`](docs/permissions.md) | Permissions par site + super-admins + hub vs perso. |
+| [`docs/notifications-botpanel.md`](docs/notifications-botpanel.md) | Intégration BotPanel. |
+| [`docs/deploiement-proxmox.md`](docs/deploiement-proxmox.md) | Déploiement LXC/VM + Cloudflare + mise à jour. |
+| [`docs/versions.md`](docs/versions.md) | Versionnage (tags `vX.Y.Z`) & rollback. |
+| [`docs/mobile-anti-zoom.md`](docs/mobile-anti-zoom.md) | Comportement « app native » mobile. |
+| [`CHANGELOG.md`](CHANGELOG.md) | Historique des versions. |
+
+### Deux profils de site (choisis par les permissions)
+
+- **Hub** (ta home page, données **partagées**) : `CAP_ACCOUNT_MANAGEMENT=super_admin`
+  (gestion des comptes : demande → validation → blocage), `CAP_PROFILES=off`
+  (impersonation inutile). Preset : `python -m panel.setup --preset hub`.
+- **Site perso** (appli à données **cloisonnées** : films, suivi… ) :
+  `CAP_ACCOUNT_MANAGEMENT=off` (l'utilisateur filtré par Cloudflare est créé
+  **auto en actif**), `CAP_PROFILES=super_admin` (voir les profils + « se mettre à
+  leur place »). Preset : `python -m panel.setup --preset perso`.
 
 ## 2. Règles de reproduction (NE PAS DÉVIER)
 
@@ -83,6 +110,7 @@ assumée). Ne le réintroduis que si le propriétaire le demande explicitement.
 python3 -m venv .venv && . .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env        # puis renseigne SECRET_KEY + SUPERADMIN_PASSWORD
+python -m panel.setup       # (optionnel) pose chaque permission et remplit .env
 python run.py               # http://127.0.0.1:8000
 ```
 
@@ -106,12 +134,13 @@ panel/
   routes/
     auth_routes.py    gateway, login local, demande d'accès, mot de passe oublié, logout
     accounts_routes.py gestion comptes + impersonation + Paramètres/mdp (spec §5/§6/§8)
-    system_routes.py  /api/system/* : bouton « Mettre à jour » (git+pip+restart)
+    system_routes.py  /api/system/* : bouton « Mettre à jour » (git+pip+SIGHUP)
     main.py           écran applicatif (à remplacer)
   templates/          base + écrans d'auth + parametres + oubli + dashboard
   static/             style.css (thème), fonts.css, logo.svg
-docs/                 spec auth, thème, notifications, déploiement, maquettes
-deploy/               install_lxc.sh, site-base.service, update.sh
+docs/                 guide dev, spec auth, thème, permissions, notifications,
+                      déploiement, versions, mobile, maquettes
+deploy/               install_lxc.sh, site-base.service, update.sh, reset_admin.sh
 run.py / wsgi.py      entrées dev / prod (gunicorn)
 ```
 
@@ -123,3 +152,6 @@ run.py / wsgi.py      entrées dev / prod (gunicorn)
 - [ ] `CF_VERIFY_JWT=true` et `SESSION_COOKIE_SECURE=true` en production.
 - [ ] Notifications BotPanel branchées sur les bons slugs.
 - [ ] Permissions demandées au propriétaire et renseignées (`CAP_*` / `panel.setup`).
+- [ ] `GET /login` redirige (pas de 405) ; `Paramètres → Diagnostic` affiche `OK ✓`
+      derrière Cloudflare.
+- [ ] Bouton « Mettre à jour » : recharge le service (SIGHUP gunicorn), sans sudo.

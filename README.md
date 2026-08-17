@@ -72,6 +72,7 @@ Maquettes de référence + captures : [`docs/maquettes-auth-v2/`](docs/maquettes
 - [`docs/deploiement-proxmox.md`](docs/deploiement-proxmox.md) — guide Proxmox + Cloudflare.
 - [`docs/permissions.md`](docs/permissions.md) — permissions par site (demandées à la création).
 - [`docs/versions.md`](docs/versions.md) — versionnage (tags `vX.Y.Z`) & mises à jour.
+- [`CHANGELOG.md`](CHANGELOG.md) — historique des versions.
 
 ## Stack
 
