@@ -130,6 +130,7 @@ panel/
   setup.py            assistant : demande chaque permission, écrit .env (python -m panel.setup)
   notify.py           helper BotPanel notify(slug, **vars)
   reset_admin.py      CLI de réinitialisation du mdp super-admin (python -m panel.reset_admin)
+  set_email.py        CLI rattache/fusionne l'e-mail du compte de base (python -m panel.set_email)
   utils.py            format date FR
   routes/
     auth_routes.py    gateway, login local, demande d'accès, mot de passe oublié, logout
@@ -140,7 +141,8 @@ panel/
   static/             style.css (thème), fonts.css, logo.svg
 docs/                 guide dev, spec auth, thème, permissions, notifications,
                       déploiement, versions, mobile, maquettes
-deploy/               install_lxc.sh, site-base.service, update.sh, reset_admin.sh
+deploy/               install_lxc.sh, site-base.service, update.sh, reset_admin.sh, set_email.sh
+install.sh            installation en une commande (curl) ; lit ADMIN_EMAIL/ADMIN_PASSWORD
 run.py / wsgi.py      entrées dev / prod (gunicorn)
 ```
 

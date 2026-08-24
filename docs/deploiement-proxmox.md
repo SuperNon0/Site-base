@@ -79,12 +79,25 @@ change.
 
 ## 2. Installer l'application
 
-Dans le conteneur (ou la VM), en root :
+### Installation express (une commande, zéro réglage après)
+
+Dans le conteneur (ou la VM), en root — passe ton e-mail Google directement, le
+super-admin est créé d'emblée :
 
 ```bash
-# Depuis ton dépôt Git
-curl -fsSL https://raw.githubusercontent.com/<user>/site-base/main/deploy/install_lxc.sh \
-  | bash -s -- https://github.com/<user>/site-base.git
+ADMIN_EMAIL=toi@gmail.com bash -c "$(curl -fsSL https://raw.githubusercontent.com/SuperNon0/Site-base/main/install.sh)"
+```
+
+- Ajoute `ADMIN_PASSWORD=...` pour choisir le mot de passe LAN (sinon un mot de
+  passe est **généré et affiché** en fin d'install — note-le).
+- Le service démarre tout seul ; il reste à exposer via Cloudflare (§3) et à
+  régler l'accès dans l'UI (§4).
+
+### Ou en deux temps (script d'install seul)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/SuperNon0/Site-base/main/deploy/install_lxc.sh \
+  | bash -s -- https://github.com/SuperNon0/Site-base.git
 ```
 
 Le script (`deploy/install_lxc.sh`) :
@@ -266,6 +279,23 @@ versions (tags, publication, rollback) est décrit dans
 > `POST /api/system/restart` — voir `panel/routes/system_routes.py`.
 > En dev local (hors gunicorn), la mise à jour Git/pip fonctionne mais le
 > rechargement automatique n'a pas lieu (relance `python run.py` à la main).
+
+### Rattacher / changer l'e-mail Google de l'admin
+
+Pour que ton compte local soit reconnu via Cloudflare (Google), rattache ton
+e-mail. Trois façons :
+
+- **Une commande serveur** (fusionne un éventuel doublon **sans rien perdre** —
+  réattribue toutes les données par `compte_id` au compte de base) :
+
+  ```bash
+  sudo bash /opt/site-base/deploy/set_email.sh toi@gmail.com   # rattacher / fusionner
+  sudo bash /opt/site-base/deploy/set_email.sh --clear         # détacher
+  ```
+
+- **Dans l'app** : Paramètres → **Mon e-mail Google** (l'UI demande de supprimer
+  d'abord un compte en conflit ; la console, elle, fusionne).
+- **À l'install** : via `ADMIN_EMAIL=...` (voir §2).
 
 ### Changer / réinitialiser le mot de passe admin
 

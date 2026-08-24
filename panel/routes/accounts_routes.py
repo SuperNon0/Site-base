@@ -96,8 +96,48 @@ def parametres():
         impersonating=bool(session.get("impersonator_id")),
         superadmins=superadmins,
         moi_id=moi["id"] if moi else None,
+        mon_email=moi["email"] if moi else None,
         cf=cf, diag=diag,
     )
+
+
+@bp.route("/parametres/mon-email", methods=["POST"])
+@login_required
+def mon_email():
+    """Rattache/change l'e-mail Google du compte de base (UI). Base admin uniquement.
+
+    En cas de conflit (un autre compte a déjà l'e-mail), on refuse et on invite à
+    supprimer d'abord ce compte — la fusion automatique est réservée à la console
+    (deploy/set_email.sh).
+    """
+    if not is_base_admin():
+        flash("Réservé au compte administrateur de base.", "error")
+        return redirect(url_for("accounts.parametres"))
+    db = get_db()
+    base = get_compte(session.get("impersonator_id") or session.get("compte_id"))
+    email = (request.form.get("email") or "").strip().lower()
+
+    if not email:  # champ vide → détacher
+        db.execute("UPDATE comptes SET email = NULL WHERE id = ?", (base["id"],))
+        db.commit()
+        audit("set_email_clear", _acteur())
+        flash("E-mail détaché de ton compte.", "info")
+        return redirect(url_for("accounts.parametres"))
+    if "@" not in email:
+        flash("E-mail invalide.", "error")
+        return redirect(url_for("accounts.parametres"))
+
+    other = db.execute("SELECT id FROM comptes WHERE email = ?", (email,)).fetchone()
+    if other is not None and other["id"] != base["id"]:
+        flash("Un autre compte utilise déjà cet e-mail. Supprime-le d'abord, ou "
+              "fusionne en console : deploy/set_email.sh " + email, "error")
+        return redirect(url_for("accounts.parametres"))
+
+    db.execute("UPDATE comptes SET email = ? WHERE id = ?", (email, base["id"]))
+    db.commit()
+    audit("set_email", _acteur(), email)
+    flash("E-mail Google enregistré.", "success")
+    return redirect(url_for("accounts.parametres"))
 
 
 @bp.route("/parametres/cloudflare", methods=["POST"])

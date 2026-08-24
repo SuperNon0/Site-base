@@ -41,12 +41,21 @@ python3 -m venv "${INSTALL_DIR}/.venv"
 "${INSTALL_DIR}/.venv/bin/pip" install -r "${INSTALL_DIR}/requirements.txt"
 
 echo ">>> [5/6] .env"
+# Compte admin d'emblée : ADMIN_EMAIL / ADMIN_PASSWORD (alias SUPERADMIN_*).
+ADMIN_EMAIL="${ADMIN_EMAIL:-${SUPERADMIN_EMAIL:-}}"
+ADMIN_PASSWORD="${ADMIN_PASSWORD:-${SUPERADMIN_PASSWORD:-}}"
+GENERATED_PWD=""
+if [ -z "${ADMIN_PASSWORD}" ]; then
+    ADMIN_PASSWORD="$(python3 -c 'import secrets; print(secrets.token_urlsafe(12))')"
+    GENERATED_PWD="${ADMIN_PASSWORD}"
+fi
 if [ ! -f "${INSTALL_DIR}/.env" ]; then
     cp "${INSTALL_DIR}/.env.example" "${INSTALL_DIR}/.env"
-    # Génère une SECRET_KEY aléatoire
     KEY="$(python3 -c 'import secrets; print(secrets.token_hex(32))')"
     sed -i "s|^SECRET_KEY=.*|SECRET_KEY=${KEY}|" "${INSTALL_DIR}/.env"
-    echo "!! Édite ${INSTALL_DIR}/.env (SUPERADMIN_PASSWORD/EMAIL, Cloudflare, BotPanel) avant de démarrer."
+    sed -i "s|^SUPERADMIN_EMAIL=.*|SUPERADMIN_EMAIL=${ADMIN_EMAIL}|" "${INSTALL_DIR}/.env"
+    sed -i "s|^SUPERADMIN_PASSWORD=.*|SUPERADMIN_PASSWORD=${ADMIN_PASSWORD}|" "${INSTALL_DIR}/.env"
+    echo "   .env créé (super-admin ${ADMIN_EMAIL:-sans e-mail} amorcé)."
 fi
 
 chown -R "${SERVICE_USER}:${SERVICE_USER}" "${INSTALL_DIR}"
@@ -62,9 +71,22 @@ echo ">>> [note] Bouton « Mettre à jour » : aucun sudo requis."
 # lui-même), et git/pip tournent sans sudo car /opt/site-base appartient à
 # ${SERVICE_USER}. Rien à configurer côté sudoers.
 
+echo ">>> [démarrage] service"
+systemctl restart site-base || true
+
 echo ""
-echo "Installation terminée."
-echo "  1. Éditer ${INSTALL_DIR}/.env"
-echo "  2. systemctl start site-base"
-echo "  3. journalctl -u site-base -f   (pour suivre les logs)"
-echo "  4. Exposer via Cloudflare Tunnel (voir docs/deploiement-proxmox.md)"
+echo "════════════════════════════════════════════════════════════════"
+echo " Installation terminée — le service tourne (127.0.0.1:8000)."
+if [ -n "${ADMIN_EMAIL}" ]; then
+  echo " Super-admin (Cloudflare)   : ${ADMIN_EMAIL}"
+fi
+if [ -n "${GENERATED_PWD}" ]; then
+  echo " Mot de passe admin (LAN)   : ${GENERATED_PWD}   ← généré, note-le !"
+  echo "   (à changer via Paramètres → Mot de passe, ou deploy/reset_admin.sh)"
+fi
+echo "════════════════════════════════════════════════════════════════"
+echo " Étapes restantes :"
+echo "  • Exposer via Cloudflare Tunnel (voir docs/deploiement-proxmox.md)"
+echo "  • Régler l'accès Cloudflare dans l'UI (Paramètres → Cloudflare / Accès)"
+echo "  • Rattacher/changer l'e-mail admin : deploy/set_email.sh <email>"
+echo "  • Logs : journalctl -u site-base -f"

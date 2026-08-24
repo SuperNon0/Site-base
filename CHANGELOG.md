@@ -32,6 +32,13 @@ complète. **Rétro-compatible** : par défaut, un site se comporte comme en v1.
   résultat de la vérif JWT (`OK ✓` / `échec ✗`) + détail — `auth.cf_diagnostic()`.
 - **Guide développeur** [`docs/guide-developpeur.md`](docs/guide-developpeur.md)
   (architecture, rôle de chaque fichier, *pourquoi*, recettes) et ce `CHANGELOG.md`.
+- **Installation en une commande** (`install.sh`) avec `ADMIN_EMAIL` / `ADMIN_PASSWORD` :
+  le super-admin est créé d'emblée (mot de passe généré et affiché si absent), le
+  service démarre tout seul.
+- **Rattacher / changer l'e-mail Google de l'admin** : commande serveur
+  `deploy/set_email.sh <email>` (fusionne un doublon en réattribuant les données
+  par `compte_id`, **sans rien perdre**) ; réglage UI **Paramètres → Mon e-mail
+  Google** ; module `python -m panel.set_email`.
 
 ### Modifié
 - **Mise à jour du site sans sudo** : rechargement par **`SIGHUP` au master
