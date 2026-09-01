@@ -31,8 +31,10 @@ from ..permissions import require_capability
 
 bp = Blueprint("system", __name__)
 
-# Racine du projet : panel/routes/system_routes.py → remonter de 2 niveaux.
-INSTALL_DIR = Path(__file__).resolve().parents[2]
+# Racine du projet : base/panel/routes/system_routes.py → remonter de 3 niveaux.
+INSTALL_DIR = Path(__file__).resolve().parents[3]
+# Dossier de la couche « base » (verrouillée), cible de la mise à jour de base.
+BASE_DIR = Path(__file__).resolve().parents[2]
 SERVICE_NAME = "site-base"
 
 # Un tag de version : 1.2.3 ou v1.2.3 (le préfixe « v » est optionnel).

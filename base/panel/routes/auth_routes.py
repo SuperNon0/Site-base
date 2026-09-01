@@ -12,7 +12,7 @@ from flask import (Blueprint, current_app, flash, redirect, render_template,
                    request, session, url_for)
 from werkzeug.security import check_password_hash
 
-from ..auth import cf_access_email, login_compte
+from ..auth import cf_access_email, home_url, login_compte
 from ..db import audit, get_db
 from ..notify import notify
 from ..utils import fmt_dt
@@ -69,7 +69,7 @@ def gateway():
 
     # actif → ouvre la session et entre dans l'app
     login_compte(compte)
-    return redirect(url_for("main.dashboard"))
+    return redirect(home_url())
 
 
 @bp.route("/login", methods=["GET", "POST"])
@@ -99,7 +99,7 @@ def login():
 
     login_compte(row)
     audit("login_local", acteur=row["email"] or "super_admin")
-    return redirect(url_for("main.dashboard"))
+    return redirect(home_url())
 
 
 @bp.route("/request-access", methods=["POST"])

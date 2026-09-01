@@ -139,6 +139,22 @@ def cf_diagnostic(team: str | None = None, aud: str | None = None) -> dict:
 # ─────────────────────────────────────────────────────────────────────────────
 # Comptes / session
 # ─────────────────────────────────────────────────────────────────────────────
+def home_url() -> str:
+    """URL de l'accueil, quel que soit le fournisseur (surcouche `app/` ou démo base).
+
+    Cherche l'endpoint qui sert « / » et construit son URL. Découple la base de
+    l'écran d'accueil : la surcouche peut fournir le sien sans casser les
+    redirections de la base.
+    """
+    for rule in current_app.url_map.iter_rules():
+        if rule.rule == "/" and "GET" in (rule.methods or set()):
+            try:
+                return url_for(rule.endpoint)
+            except Exception:
+                break
+    return "/"
+
+
 def get_compte(compte_id: int):
     if compte_id is None:
         return None
@@ -205,7 +221,7 @@ def super_admin_required(view):
             return redirect(url_for("auth.gateway"))
         if not is_super_admin():
             flash("Réservé au super-admin.", "error")
-            return redirect(url_for("main.dashboard"))
+            return redirect(home_url())
         return view(*args, **kwargs)
 
     return wrapped

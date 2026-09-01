@@ -13,8 +13,8 @@ from flask import (Blueprint, current_app, flash, redirect, render_template,
                    request, session, url_for)
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from ..auth import (current_compte, get_compte, is_base_admin, is_super_admin,
-                    login_required, super_admin_required)
+from ..auth import (current_compte, get_compte, home_url, is_base_admin,
+                    is_super_admin, login_required, super_admin_required)
 from ..db import audit, get_db
 from ..notify import notify
 from ..permissions import (any_admin_capability, has_capability,
@@ -46,7 +46,7 @@ def comptes():
     can_impersonate = has_capability("profiles")
     if not (can_manage or can_impersonate):
         flash("Action non autorisée sur ce site.", "error")
-        return redirect(url_for("main.dashboard"))
+        return redirect(home_url())
 
     db = get_db()
     pending = []
@@ -74,7 +74,7 @@ def parametres():
     # Accessible avec au moins une permission d'admin, ou pour le compte de base.
     if not (any_admin_capability() or is_base_admin()):
         flash("Action non autorisée sur ce site.", "error")
-        return redirect(url_for("main.dashboard"))
+        return redirect(home_url())
     # Compte super-admin réel (jamais l'identité impersonnée).
     moi = get_compte(session.get("impersonator_id") or session.get("compte_id"))
     # Liste des super-admins « e-mail » (gérables par le compte de base).
@@ -349,7 +349,7 @@ def impersonate(compte_id: int):
     session["compte_id"] = compte_id
     audit("impersonate_start", _acteur(), cible["email"])
     flash(f"Tu consultes maintenant le compte de {cible['email']}.", "info")
-    return redirect(url_for("main.dashboard"))
+    return redirect(home_url())
 
 
 @bp.route("/api/impersonate/stop", methods=["POST"])
@@ -360,4 +360,4 @@ def impersonate_stop():
         cible = get_compte(session.get("compte_id"))
         session["compte_id"] = real_id
         audit("impersonate_stop", _acteur(), cible["email"] if cible else None)
-    return redirect(url_for("main.dashboard"))
+    return redirect(home_url())

@@ -22,7 +22,7 @@ import functools
 
 from flask import current_app, flash, jsonify, redirect, request, url_for
 
-from .auth import current_compte, is_super_admin
+from .auth import current_compte, home_url, is_super_admin
 
 LEVELS = ("off", "membre", "super_admin")
 
@@ -99,7 +99,7 @@ def require_capability(key: str):
                 if request.path.startswith("/api/"):
                     return jsonify({"ok": False, "error": "Action non autorisée."}), 403
                 flash("Action non autorisée sur ce site.", "error")
-                return redirect(url_for("main.dashboard"))
+                return redirect(home_url())
             return view(*args, **kwargs)
 
         return wrapped
