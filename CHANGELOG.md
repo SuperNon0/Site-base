@@ -28,8 +28,10 @@ complète. **Rétro-compatible** : par défaut, un site se comporte comme en v1.
 - **Config Cloudflare éditable dans l'UI** (Paramètres → « Cloudflare / Accès »),
   stockée en base (`app_settings`, prioritaire sur `.env`) via `panel/settings.py`.
   Champ « Équipe » normalisé (nom seul).
-- **Écran Diagnostic** (Paramètres) : jeton reçu, en-tête e-mail, équipe/AUD,
-  résultat de la vérif JWT (`OK ✓` / `échec ✗`) + détail — `auth.cf_diagnostic()`.
+- **Écran Diagnostic** intégré à « Cloudflare / Accès » : boutons **Enregistrer**
+  et **Tester** (teste en direct les valeurs saisies via `POST /api/cf-test`),
+  résultat affiché juste en dessous (jeton reçu, en-tête e-mail, équipe/AUD,
+  vérif JWT `OK ✓` / `échec ✗` + détail) — `auth.cf_diagnostic()`.
 - **Guide développeur** [`docs/guide-developpeur.md`](docs/guide-developpeur.md)
   (architecture, rôle de chaque fichier, *pourquoi*, recettes) et ce `CHANGELOG.md`.
 - **Installation en une commande** (`install.sh`) avec `ADMIN_EMAIL` / `ADMIN_PASSWORD` :

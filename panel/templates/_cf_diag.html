@@ -1,0 +1,18 @@
+{# Lignes de diagnostic Cloudflare (rendu initial serveur ; le bouton « Tester »
+   les régénère côté client via /api/cf-test). Attend la variable `diag`. #}
+<div class="acct-row"><span class="acct-main"><span class="acct-mail">Jeton Cloudflare reçu</span></span>
+  <span class="role-badge {{ 'role-admin' if diag.has_token else 'role-bloque' }}">{{ 'oui' if diag.has_token else 'non' }}</span></div>
+<div class="acct-row"><span class="acct-main"><span class="acct-mail">En-tête e-mail</span></span>
+  <span class="acct-sub">{{ diag.header_email or '—' }}</span></div>
+<div class="acct-row"><span class="acct-main"><span class="acct-mail">Équipe / AUD</span></span>
+  <span class="acct-sub">{{ diag.team or '—' }} / {{ diag.aud or '—' }}</span></div>
+<div class="acct-row"><span class="acct-main"><span class="acct-mail">Vérification JWT</span></span>
+  <span class="role-badge {{ 'role-super' if diag.jwt_status.startswith('OK') else ('role-bloque' if diag.jwt_status.startswith('échec') else 'role-membre') }}">{{ diag.jwt_status }}</span></div>
+{% if diag.jwt_email %}
+<div class="acct-row"><span class="acct-main"><span class="acct-mail">E-mail du jeton</span></span>
+  <span class="acct-sub">{{ diag.jwt_email }}</span></div>
+{% endif %}
+{% if diag.jwt_error %}
+<div class="acct-row"><span class="acct-main"><span class="acct-mail">Détail</span></span>
+  <span class="acct-sub">{{ diag.jwt_error }}</span></div>
+{% endif %}

@@ -140,6 +140,21 @@ def mon_email():
     return redirect(url_for("accounts.parametres"))
 
 
+@bp.route("/api/cf-test", methods=["POST"])
+@login_required
+def cf_test():
+    """Teste en direct la connexion Cloudflare pour les valeurs saisies (bouton Tester)."""
+    from flask import jsonify
+    if not is_super_admin():
+        return jsonify({"error": "Réservé au super-admin."}), 403
+    from ..auth import cf_diagnostic
+    from ..settings import normalize_team
+    data = request.get_json(silent=True) or {}
+    team = normalize_team(data.get("team", ""))
+    aud = (data.get("aud", "") or "").strip()
+    return jsonify(cf_diagnostic(team=team, aud=aud))
+
+
 @bp.route("/parametres/cloudflare", methods=["POST"])
 @login_required
 def cloudflare_settings():

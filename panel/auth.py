@@ -92,14 +92,19 @@ def cf_access_email() -> str | None:
     return email or None
 
 
-def cf_diagnostic() -> dict:
+def cf_diagnostic(team: str | None = None, aud: str | None = None) -> dict:
     """Diagnostic de la connexion Cloudflare (affiché dans Paramètres).
+
+    Sans argument : teste la config enregistrée (`cf_config()`). Avec `team`/`aud`,
+    teste ces valeurs **en direct** (bouton « Tester », avant enregistrement).
 
     Renvoie : team, aud, verify, header_email, has_token, jwt_status
     (« non testé » | « OK ✓ » | « échec ✗ »), jwt_email, jwt_error.
     """
     from .settings import cf_config
     cfg = cf_config()
+    if team is not None:
+        cfg = {"team": team, "aud": (aud if aud is not None else cfg["aud"]), "verify": cfg["verify"]}
     header_email = request.headers.get("Cf-Access-Authenticated-User-Email")
     token = _cf_token()
     d = {

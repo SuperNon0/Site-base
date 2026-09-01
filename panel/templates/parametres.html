@@ -133,7 +133,7 @@
   <section class="acct-section">
     <h3>Cloudflare / Accès</h3>
     <div class="fl-card">
-      <form method="post" action="{{ url_for('accounts.cloudflare_settings') }}"
+      <form id="cf-form" method="post" action="{{ url_for('accounts.cloudflare_settings') }}"
             style="display:flex;flex-direction:column;gap:12px">
         <div>
           <label class="fl-label" for="cf-team">Équipe (nom seul, ex. super-nono)</label>
@@ -149,40 +149,58 @@
                  style="width:auto">
           Vérifier le JWT Cloudflare (recommandé en production)
         </label>
-        <div style="display:flex;justify-content:flex-end">
+        <div style="display:flex;justify-content:flex-end;gap:8px">
+          <button type="button" id="cf-test" class="btn ghost">Tester</button>
           <button type="submit" class="btn primary">Enregistrer</button>
         </div>
       </form>
+
+      <!-- résultat du test / diagnostic -->
+      <div class="fl-label" style="margin:14px 0 8px">Résultat du test</div>
+      <div class="acct-list" id="cf-result">
+        {% include "_cf_diag.html" %}
+      </div>
+      <p class="access-note" style="text-align:left;margin-top:8px">
+        « non testé » = pas de jeton (l'origine n'est peut-être pas derrière Access).
+        Erreur « …cloudflareaccess.com.cloudflareaccess.com » → mets le <b>nom seul</b>
+        dans Équipe. Erreur « audience » → l'AUD ne correspond pas à l'app Access.
+      </p>
     </div>
   </section>
 
-  <!-- ------------------------------------------------------------ diagnostic -->
-  <section class="acct-section">
-    <h3>Diagnostic</h3>
-    <div class="fl-card acct-list">
-      <div class="acct-row"><span class="acct-main"><span class="acct-mail">Jeton Cloudflare reçu</span></span>
-        <span class="role-badge {{ 'role-admin' if diag.has_token else 'role-bloque' }}">{{ 'oui' if diag.has_token else 'non' }}</span></div>
-      <div class="acct-row"><span class="acct-main"><span class="acct-mail">En-tête e-mail</span></span>
-        <span class="acct-sub">{{ diag.header_email or '—' }}</span></div>
-      <div class="acct-row"><span class="acct-main"><span class="acct-mail">Équipe / AUD</span></span>
-        <span class="acct-sub">{{ diag.team or '—' }} / {{ diag.aud or '—' }}</span></div>
-      <div class="acct-row"><span class="acct-main"><span class="acct-mail">Vérification JWT</span></span>
-        <span class="role-badge {{ 'role-super' if diag.jwt_status.startswith('OK') else ('role-bloque' if diag.jwt_status.startswith('échec') else 'role-membre') }}">{{ diag.jwt_status }}</span></div>
-      {% if diag.jwt_email %}
-      <div class="acct-row"><span class="acct-main"><span class="acct-mail">E-mail du jeton</span></span>
-        <span class="acct-sub">{{ diag.jwt_email }}</span></div>
-      {% endif %}
-      {% if diag.jwt_error %}
-      <div class="acct-row"><span class="acct-main"><span class="acct-mail">Détail</span>
-        <span class="acct-sub">{{ diag.jwt_error }}</span></span></div>
-      {% endif %}
-    </div>
-    <p class="access-note" style="text-align:left;margin-top:8px">
-      « non testé » = pas de jeton (l'origine n'est peut-être pas derrière Access).
-      Erreur « …cloudflareaccess.com.cloudflareaccess.com » → mets le <b>nom seul</b>
-      dans Équipe. Erreur « audience » → l'AUD ne correspond pas à l'app Access.
-    </p>
-  </section>
+  <script>
+  (function () {
+    var btn = document.getElementById("cf-test");
+    if (!btn) return;
+    var result = document.getElementById("cf-result");
+    function esc(s){ var d=document.createElement("div"); d.textContent=(s==null?"":String(s)); return d.innerHTML; }
+    function row(label, valueHtml){ return '<div class="acct-row"><span class="acct-main"><span class="acct-mail">'+label+'</span></span>'+valueHtml+'</div>'; }
+    function badge(cls, txt){ return '<span class="role-badge '+cls+'">'+esc(txt)+'</span>'; }
+    function render(d){
+      var jwtCls = d.jwt_status && d.jwt_status.indexOf("OK")===0 ? "role-super"
+                 : (d.jwt_status && d.jwt_status.indexOf("échec")===0 ? "role-bloque" : "role-membre");
+      var h = "";
+      h += row("Jeton Cloudflare reçu", badge(d.has_token?"role-admin":"role-bloque", d.has_token?"oui":"non"));
+      h += row("En-tête e-mail", '<span class="acct-sub">'+esc(d.header_email||"—")+'</span>');
+      h += row("Équipe / AUD", '<span class="acct-sub">'+esc(d.team||"—")+" / "+esc(d.aud||"—")+'</span>');
+      h += row("Vérification JWT", badge(jwtCls, d.jwt_status));
+      if (d.jwt_email) h += row("E-mail du jeton", '<span class="acct-sub">'+esc(d.jwt_email)+'</span>');
+      if (d.jwt_error) h += row("Détail", '<span class="acct-sub">'+esc(d.jwt_error)+'</span>');
+      result.innerHTML = h;
+    }
+    btn.addEventListener("click", function () {
+      btn.disabled = true; var old = btn.textContent; btn.textContent = "Test…";
+      fetch("{{ url_for('accounts.cf_test') }}", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ team: document.getElementById("cf-team").value,
+                               aud: document.getElementById("cf-aud").value })
+      }).then(function(r){ return r.json(); })
+        .then(function(d){ if (d.error) { result.innerHTML = '<div class="acct-row"><span class="acct-sub">'+esc(d.error)+'</span></div>'; } else { render(d); } })
+        .catch(function(e){ result.innerHTML = '<div class="acct-row"><span class="acct-sub">Erreur : '+esc(e)+'</span></div>'; })
+        .finally(function(){ btn.disabled = false; btn.textContent = old; });
+    });
+  })();
+  </script>
   {% endif %}
 
   {% if can('site_update') %}
