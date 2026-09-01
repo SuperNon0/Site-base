@@ -1,11 +1,23 @@
 # CLAUDE.md — instructions pour le développeur (IA)
 
-> Ce fichier est lu en premier par l'assistant qui reprend ce dépôt. Il fixe le
-> **contrat** : ce qui doit être reproduit **à l'identique**, et ce qui est libre.
+> ## ⚠️ v2 — Modèle en couches (lis d'abord [`docs/modele-couches.md`](docs/modele-couches.md))
+>
+> Ce dépôt est organisé en **deux couches** :
+> - **`base/`** = la fondation (login, thème, permissions, Paramètres…). **NE
+>   JAMAIS l'éditer.** Elle se met à jour toute seule (Paramètres → « Mettre à
+>   jour la base », ou `python manage.py sync_base`).
+> - **`app/`** = ton projet (tes écrans, tes tables). **Tout ton travail va ici**,
+>   sans toucher `base/`. Modèle de départ : `app.example/` (copie-le en `app/`).
+>
+> Le code de la fondation vit sous `base/panel/` (mêmes fichiers que décrits plus
+> bas, préfixés `base/`). On y touche **uniquement dans le dépôt site-base**,
+> jamais dans un projet.
+
+> Ce fichier fixe le **contrat** : ce qui doit être reproduit **à l'identique**,
+> et ce qui est libre.
 >
 > 📖 Pour **comprendre le code** (architecture, rôle de chaque fichier, pourquoi
-> chaque choix, et comment étendre le socle), lis
-> [`docs/guide-developpeur.md`](docs/guide-developpeur.md).
+> chaque choix), lis [`docs/guide-developpeur.md`](docs/guide-developpeur.md).
 
 ## 1. Ce qu'est ce dépôt
 
