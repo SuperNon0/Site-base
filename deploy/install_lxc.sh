@@ -44,6 +44,11 @@ echo ">>> [5/6] .env"
 # Compte admin d'emblée : ADMIN_EMAIL / ADMIN_PASSWORD (alias SUPERADMIN_*).
 ADMIN_EMAIL="${ADMIN_EMAIL:-${SUPERADMIN_EMAIL:-}}"
 ADMIN_PASSWORD="${ADMIN_PASSWORD:-${SUPERADMIN_PASSWORD:-}}"
+# S'il n'a pas été fourni et qu'un terminal est disponible, on le demande.
+if [ -z "${ADMIN_EMAIL}" ] && [ -t 0 ]; then
+    read -rp ">>> E-mail Google du compte admin (Entrée pour aucun) : " ADMIN_EMAIL || true
+    ADMIN_EMAIL="$(printf '%s' "${ADMIN_EMAIL}" | tr -d '[:space:]')"
+fi
 GENERATED_PWD=""
 if [ -z "${ADMIN_PASSWORD}" ]; then
     ADMIN_PASSWORD="$(python3 -c 'import secrets; print(secrets.token_urlsafe(12))')"

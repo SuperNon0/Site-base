@@ -92,6 +92,8 @@ ADMIN_EMAIL=toi@gmail.com bash -c "$(curl -fsSL https://raw.githubusercontent.co
   passe est **généré et affiché** en fin d'install — note-le).
 - Le service démarre tout seul ; il reste à exposer via Cloudflare (§3) et à
   régler l'accès dans l'UI (§4).
+- Si tu ne passes pas `ADMIN_EMAIL`, **l'installateur te le demande** au lancement
+  (Entrée pour aucun). Tu pourras toujours le régler après (voir plus bas).
 
 ### Ou en deux temps (script d'install seul)
 
