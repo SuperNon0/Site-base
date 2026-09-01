@@ -92,7 +92,22 @@ def info():
         data["branch"] = _run(["git", "rev-parse", "--abbrev-ref", "HEAD"], 5)["stdout"].strip() or None
     active = _run(["systemctl", "is-active", SERVICE_NAME], 5)
     data["service_active"] = (active["stdout"].strip() == "active") if active["exit_code"] >= 0 else None
+    # Version de la couche « base » (modèle en couches).
+    from ..sync_base import read_version
+    data["base_version"] = read_version()
     return jsonify(data)
+
+
+@bp.route("/api/system/sync-base", methods=["POST"])
+@require_capability("site_update")
+def sync_base_route():
+    """Met à jour la couche « base » depuis le dépôt site-base (app/ non touché)."""
+    if _blocked_by_impersonation():
+        return jsonify({"ok": False, "error": "Reviens à ton compte d'abord."}), 403
+    from ..sync_base import sync
+    data = request.get_json(silent=True) or {}
+    ref = (data.get("ref") or "").strip() or None
+    return jsonify(sync(ref))
 
 
 @bp.route("/api/system/update", methods=["POST"])

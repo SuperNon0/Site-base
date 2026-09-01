@@ -17,4 +17,4 @@ if [ $# -lt 1 ]; then
 fi
 
 cd "${INSTALL_DIR}"
-sudo -u "${SERVICE_USER}" "${INSTALL_DIR}/.venv/bin/python" -m panel.set_email "$1"
+sudo -u "${SERVICE_USER}" "${INSTALL_DIR}/.venv/bin/python" "${INSTALL_DIR}/manage.py" set_email "$1"

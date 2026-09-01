@@ -10,6 +10,6 @@ INSTALL_DIR="/opt/site-base"
 SERVICE_USER="sitebase"
 
 cd "${INSTALL_DIR}"
-sudo -u "${SERVICE_USER}" "${INSTALL_DIR}/.venv/bin/python" -m panel.reset_admin "$@"
+sudo -u "${SERVICE_USER}" "${INSTALL_DIR}/.venv/bin/python" "${INSTALL_DIR}/manage.py" reset_admin "$@"
 
 echo "→ Reconnecte-toi en local avec le nouveau mot de passe."

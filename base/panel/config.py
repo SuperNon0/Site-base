@@ -63,6 +63,11 @@ class Config:
     CAP_ADMIN_PASSWORD = os.getenv("CAP_ADMIN_PASSWORD", "super_admin")
     CAP_SITE_UPDATE = os.getenv("CAP_SITE_UPDATE", "super_admin")
 
+    # --- Mise à jour de la couche « base » (modèle en couches) ---
+    # Dépôt source de la base et version à installer (défaut : dernière « couches »).
+    BASE_REPO_URL = os.getenv("BASE_REPO_URL", "https://github.com/SuperNon0/Site-base.git")
+    BASE_REPO_REF = os.getenv("BASE_REPO_REF", "")
+
     # --- Notifications BotPanel ---
     # Adresse du BotPanel (https://github.com/SuperNon0/botpanel).
     BOTPANEL_URL = os.getenv("BOTPANEL_URL", "")
