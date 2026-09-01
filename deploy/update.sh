@@ -17,7 +17,7 @@ TARGET=""
 for arg in "$@"; do
   case "$arg" in
     --no-restart) RESTART=false ;;
-    v[0-9]*) TARGET="$arg" ;;
+    v[0-9]*|[0-9]*) TARGET="$arg" ;;   # v1.2.3 ou 1.2.3
   esac
 done
 
@@ -31,7 +31,7 @@ run git -C "${INSTALL_DIR}" fetch --tags --prune --force origin
 
 # Choisit la cible : arg fourni, sinon dernier tag vX.Y.Z, sinon la branche.
 if [ -z "${TARGET}" ]; then
-  TARGET="$(run git -C "${INSTALL_DIR}" tag -l --sort=-v:refname | grep -E '^v[0-9]' | head -1 || true)"
+  TARGET="$(run git -C "${INSTALL_DIR}" tag -l --sort=-v:refname | grep -E '^v?[0-9]' | head -1 || true)"
 fi
 
 if [ -n "${TARGET}" ]; then

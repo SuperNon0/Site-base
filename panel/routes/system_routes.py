@@ -35,8 +35,8 @@ bp = Blueprint("system", __name__)
 INSTALL_DIR = Path(__file__).resolve().parents[2]
 SERVICE_NAME = "site-base"
 
-# Un tag de version ressemble à v1, v1.2, v1.2.3 (préfixe « v » puis des chiffres).
-_VERSION_RE = re.compile(r"^v\d+(\.\d+)*$")
+# Un tag de version : 1.2.3 ou v1.2.3 (le préfixe « v » est optionnel).
+_VERSION_RE = re.compile(r"^v?\d+(\.\d+)*$")
 
 
 def _version_tags() -> list[str]:
