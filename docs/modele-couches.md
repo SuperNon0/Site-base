@@ -72,3 +72,22 @@ sait réattribuer/fusionner ces lignes (cf. `set_email`).
 **Ne modifie JAMAIS `base/`.** Si la base doit évoluer, la modification se fait
 dans le dépôt site-base (demande-la), une version est publiée, et chaque projet
 clique « Mettre à jour la base ». Tout ton travail vit dans `app/`.
+
+## Verrou : la base **ne peut pas** être modifiée (pas seulement « ne doit pas »)
+
+Deux garde-fous, en plus de la règle ci-dessus :
+
+- **CI GitHub** (`.github/workflows/protect-base.yml`) : tout push ou PR qui
+  **modifie `base/`** dans un dépôt **projet** échoue. (Le dépôt source du
+  site-base est exclu par son nom.)
+- **Hook pre-commit** (`.githooks/pre-commit`) : bloque un commit local touchant
+  `base/`. À activer une fois par projet :
+
+  ```bash
+  git config core.hooksPath .githooks
+  ```
+
+  Contournement volontaire (rare) : `ALLOW_BASE_EDIT=1 git commit …`.
+
+Et rappel : `sync_base` **écrase** `base/` — toute modification locale y serait de
+toute façon **effacée** à la prochaine mise à jour de la base.
