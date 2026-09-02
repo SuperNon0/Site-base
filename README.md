@@ -1,87 +1,227 @@
 <div align="center">
 
-# site-base
+# site-base — modèle en couches
 
-**Fondation réutilisable pour démarrer un projet web** — thème « RecipeLog »
+**Fondation réutilisable pour démarrer un projet web.** Thème « RecipeLog »
 (dark + doré), authentification multi-comptes derrière **Cloudflare Zero Trust**,
-et notifications **BotPanel** intégrées.
+notifications **BotPanel**, et un **socle verrouillé qui se met à jour tout seul**.
 
 </div>
 
 ---
 
-Ce dépôt est un **template**. On le clone pour chaque nouveau projet : le thème,
-le login v2 et les notifications sont déjà en place, il n'y a qu'à ajouter les
-écrans métier. Il est pensé pour être **repris à l'identique** par un développeur
-(y compris un assistant IA) — voir [`CLAUDE.md`](CLAUDE.md).
+> ## 🟡 À LIRE EN PREMIER (dev IA)
+>
+> Ce dépôt a **deux couches** :
+> - **`base/`** = la fondation (login, thème, permissions, page Paramètres, mises
+>   à jour). **Tu n'y touches JAMAIS.** Elle se met à jour toute seule.
+> - **`app/`** = **ton projet** (tes écrans, tes tables, tes réglages). **Tout ton
+>   travail vit ici.** Modèle de départ prêt : **`app.example/`** → copie-le en `app/`.
+>
+> **Les 3 règles d'or :**
+> 1. **Ne modifie jamais `base/`.** (Un verrou CI + pre-commit le refuse — voir plus bas.)
+> 2. **Développe le métier sur sa propre branche**, jamais mélangée avec la base.
+> 3. Si tu crois qu'il faut changer `base/` → **arrête-toi et demande au propriétaire.**
+>
+> Contrat complet : [`CLAUDE.md`](CLAUDE.md) · Modèle détaillé : [`docs/modele-couches.md`](docs/modele-couches.md)
 
-## Fonctionnalités
+---
 
-- 🎨 **Thème RecipeLog** — dark-only, accent doré `#e8c547`, DM Serif Display +
-  DM Mono. CSS pur, tokens dans `:root`. Rendu fidèle aux maquettes de référence.
-- 🔐 **Auth v2 multi-comptes** — cycle de vie `pending → actif / refused / bloqué`,
-  rôles `super_admin` / `membre`, « voir en tant que » (impersonation) avec bandeau,
-  journal d'audit.
-- ☁️ **Cloudflare Zero Trust** — e-mail Google comme portier, **vérification du
-  JWT** `Cf-Access-Jwt-Assertion` + `aud`, login local par mot de passe en LAN.
-- 🔔 **Notifications BotPanel** — helper `notify(slug, **vars)`, branché sur le
-  cycle de vie des comptes, désactivable via `.env`.
-- 🔄 **Mise à jour en un clic** — Paramètres → « Mettre à jour » (git + pip +
-  redémarrage du service), en plus du changement de mot de passe admin.
-- 🧩 **Permissions par site** — chaque fonctionnalité (gestion des comptes, profils
-  + impersonation, mot de passe admin, mise à jour) a un niveau `super_admin` /
-  `membre` / `off`, **demandé à la création** (`python -m panel.setup`).
-- 📦 **Déploiement Proxmox** — script LXC + service systemd + tunnel Cloudflare.
+## Ce que tu obtiens gratuitement (dans `base/`, sans rien coder)
 
-## Démarrage rapide (dev local)
+- 🎨 **Thème RecipeLog** — dark, accent doré `#e8c547`, DM Serif Display + DM Mono.
+  Réutilise ses classes (`fl-card`, `fl-title-serif`, `.btn`…) via `{% extends "base.html" %}`.
+- 🔐 **Auth v2 multi-comptes** — cycle `pending → actif / refused / bloqué`, rôles
+  `super_admin` / `membre`, « voir en tant que » (impersonation) + bandeau, audit.
+- ☁️ **Cloudflare Zero Trust** — e-mail vérifié par **JWT** (`RS256` + `aud` + `iss`),
+  login local par mot de passe en LAN. Réglable dans l'UI (Paramètres → Cloudflare / Accès).
+- 🔔 **Notifications BotPanel** — helper `notify(slug, **vars)` déjà branché sur le
+  cycle de vie des comptes.
+- 🧩 **Permissions par site** — gestion des comptes, profils, mot de passe, mises à
+  jour, chacune `off` / `membre` / `super_admin` (`python manage.py setup`).
+- 🔄 **Deux mises à jour, deux pages** — voir plus bas.
+- 🔒 **Base verrouillée** — CI + pre-commit refusent toute modif de `base/` dans un projet.
+
+---
+
+## Démarrage (dev local, sans Cloudflare)
 
 ```bash
 python3 -m venv .venv && . .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env
-# Renseigne au minimum SECRET_KEY et SUPERADMIN_PASSWORD dans .env
-python run.py            # → http://127.0.0.1:8000
 ```
 
-Sans Cloudflare en local, connecte-toi avec le `SUPERADMIN_PASSWORD` (accès LAN).
+Dans `.env`, mets au minimum :
 
-## Écrans
+```env
+SECRET_KEY=une-longue-chaine-aleatoire
+SUPERADMIN_PASSWORD=tonMotDePasse       # login LAN
+CF_VERIFY_JWT=false                       # dev sans Cloudflare
+ALLOW_LOCAL_LOGIN=true
+```
+
+Puis :
+
+```bash
+python run.py            # → http://127.0.0.1:8000  (login avec SUPERADMIN_PASSWORD)
+```
+
+`run.py` assemble tout seul `base/` + `app/` (rien à configurer côté chemins).
+Sans dossier `app/`, la base tourne seule (écran de démo).
+
+---
+
+## Ajouter ton métier (le workflow)
+
+```bash
+cp -r app.example app          # démarre ton projet (une seule fois)
+python run.py                  # l'accueil devient celui de app/
+```
+
+Tu édites **uniquement** `app/` :
+
+| Fichier | Rôle |
+|---|---|
+| `app/__init__.py` | `register(flask_app)` : branche tes blueprints. Déclare tes réglages via `flask_app.config["APP_REGLAGES_TEMPLATE"] = "app_reglages.html"`. |
+| `app/routes.py` | tes écrans. Réutilise la base : `from panel.auth import login_required, current_compte` ; `from panel.db import get_db`. |
+| `app/templates/` | tes gabarits. `{% extends "base.html" %}` → thème + en-tête + bandeau d'impersonation gratuits. Priment sur ceux de la base. |
+| `app/schema.sql` | tes tables métier (exécuté automatiquement au démarrage). |
+
+### Points d'extension fournis par la base
+
+| Prise | Ce que tu fournis |
+|---|---|
+| **Écrans** | `register(flask_app)` enregistre tes blueprints (dont l'accueil `/`). |
+| **Templates** | `app/templates/` s'ajoute et **prime** sur ceux de la base. |
+| **Tables** | `app/schema.sql` est exécuté en plus du schéma de la base. |
+| **Réglages** | `APP_REGLAGES_TEMPLATE` → la page **`/reglages`** de la base inclut ton partial (même thème, même cadre). Stocke tes options avec `panel.settings.set_setting` / `get_setting`. |
+
+### Données par utilisateur (cloisonnées)
+
+Nomme ta colonne **`compte_id`** et filtre par le compte **effectif** (impersonation
+incluse) :
+
+```python
+cid = current_compte()["id"]
+get_db().execute("SELECT * FROM films WHERE compte_id = ?", (cid,))
+```
+
+Bonus : la base sait réattribuer/fusionner ces lignes lors d'un changement d'e-mail
+(`manage.py set_email`). Décision **partagé vs cloisonné** à poser au propriétaire.
+
+---
+
+## Deux pages, deux mises à jour (base vs application)
+
+Tout est dessiné par la base → **identique sur tous tes sites** :
+
+| | Page | Bouton de mise à jour | Verrouillé ? |
+|---|---|---|---|
+| **Site** (base) | `/parametres` | « Mettre à jour la base » (`sync_base`) | ✅ dans `base/` |
+| **Application** (métier) | `/reglages` | « Mettre à jour l'application » (git du projet) | ❌ c'est ton `app/` |
+
+Le **mécanisme** des deux boutons vit dans la base verrouillée (impossible à casser) ;
+seule la **cible** change. La page `/reglages` appartient à la base (cadre + thème),
+son **contenu** vient de ton partial `app_reglages.html`.
+
+---
+
+## Le verrou (pourquoi tu **ne peux pas** casser la base)
+
+Deux garde-fous, en plus des règles d'or :
+
+- **CI GitHub** — `.github/workflows/protect-base.yml` : tout push/PR modifiant
+  `base/` dans un dépôt projet **échoue** (le dépôt site-base lui-même est exclu).
+- **Hook pre-commit** — `.githooks/pre-commit` : bloque un commit local touchant
+  `base/`. À activer une fois par projet :
+
+  ```bash
+  git config core.hooksPath .githooks
+  ```
+
+Rappel : `sync_base` **écrase** `base/` — toute modif locale y serait perdue.
+
+---
+
+## Commandes (`manage.py`)
+
+```bash
+python manage.py setup [--preset hub|perso]   # pose chaque permission, écrit .env
+python manage.py reset_admin ["nouveau_mdp"]  # réinitialise le mot de passe admin
+python manage.py set_email <email> | --clear  # rattache/fusionne l'e-mail admin
+python manage.py sync_base [--ref 2.1.0]      # met à jour la couche base/
+```
+
+**Presets :** `hub` (données partagées : gestion des comptes on, impersonation off)
+· `perso` (données cloisonnées : accès auto en actif, impersonation on).
+
+## Tests
+
+```bash
+python tests/test_site.py     # batterie complète : 50 vérifs (base + surcouche)
+```
+
+Couvre auth, sécurité API (401 + `no-store`), cycle de vie des comptes, dernier
+super-admin indestructible, impersonation, site perso, réglages, mises à jour,
+et le branchement d'une surcouche `app/`. Aucune dépendance (pas besoin de pytest).
+
+---
+
+## Écrans d'auth (fournis par la base)
 
 | Écran | Quand | Template |
 |---|---|---|
 | Login local | Accès LAN (mot de passe super-admin) | `login.html` |
-| Demander un accès | E-mail CF autorisé mais inconnu | `demande.html` |
+| Demander un accès | E-mail CF autorisé mais inconnu (hub) | `demande.html` |
 | En attente | Compte `pending` | `attente.html` |
 | Refusé | Compte `refused` | `refus.html` |
 | Suspendu | Compte `bloqué` | `bloque.html` |
-| Comptes (gestion) | Super-admin | `comptes.html` |
-| Paramètres | Super-admin (mot de passe + mise à jour) | `parametres.html` |
+| Comptes (gestion) | Super-admin (hub) | `comptes.html` |
+| Paramètres du site | Admin | `parametres.html` |
+| Réglages de l'app | Point d'extension surcouche | `reglages.html` (+ ton partial) |
 | Mot de passe oublié | Depuis le login | `oubli.html` |
-| Bandeau impersonation | « Voir en tant que » actif | `base.html` |
-| Dashboard démo | Connecté | `dashboard.html` (à remplacer) |
 
-Maquettes de référence + captures : [`docs/maquettes-auth-v2/`](docs/maquettes-auth-v2/).
+Maquettes de référence : [`docs/maquettes-auth-v2/`](docs/maquettes-auth-v2/). Ces
+écrans sont un **contrat visuel** : ils vivent dans `base/`, tu n'y touches pas.
+
+## Configuration `.env` (variables clés)
+
+| Variable | Rôle |
+|---|---|
+| `SECRET_KEY` | signe les sessions (obligatoire). |
+| `SUPERADMIN_PASSWORD` / `SUPERADMIN_EMAIL` | amorce le compte super-admin. |
+| `CF_VERIFY_JWT` | `true` en prod (vérifie le JWT Cloudflare), `false` en dev LAN. |
+| `ALLOW_LOCAL_LOGIN` | autorise le login par mot de passe (LAN). |
+| `SESSION_COOKIE_SECURE` | `true` en prod (HTTPS). |
+| `CF_ACCESS_TEAM_DOMAIN` / `CF_ACCESS_AUD` | équipe + AUD Cloudflare (aussi réglables dans l'UI). |
+| `BRAND_PREFIX` / `BRAND_SUFFIX` / `BRAND_BADGE` | ta marque. Logo : `base/panel/static/logo.svg`. |
+| `CAP_*` | niveaux de permissions (ou `manage.py setup`). |
+| `BOTPANEL_URL` | active les notifications (vide = désactivées). |
+
+## Déploiement (Proxmox + Cloudflare)
+
+LXC prioritaire, service systemd, tunnel Cloudflare, mise à jour sans sudo
+(SIGHUP gunicorn). Scripts dans `deploy/` (`install_lxc.sh`, `site-base.service`,
+`update.sh`, `set_email.sh`, `reset_admin.sh`). Guide complet :
+[`docs/deploiement-proxmox.md`](docs/deploiement-proxmox.md).
+
+---
 
 ## Documentation
 
-- [`CLAUDE.md`](CLAUDE.md) — contrat de reproduction (à lire en premier).
-- [`docs/guide-developpeur.md`](docs/guide-developpeur.md) — **comprendre le code** (architecture, rôle de chaque fichier, pourquoi, recettes d'extension).
+- [`CLAUDE.md`](CLAUDE.md) — **contrat de reproduction** (à lire en premier).
+- [`docs/modele-couches.md`](docs/modele-couches.md) — **base verrouillée + surcouche** (l'essentiel du dev IA).
+- [`docs/guide-developpeur.md`](docs/guide-developpeur.md) — comprendre le code (architecture, pourquoi, recettes).
+- [`docs/authentification-v2.md`](docs/authentification-v2.md) — spec complète de l'auth (sécurité §9).
 - [`docs/theme-recipelog.md`](docs/theme-recipelog.md) — cahier des charges du thème.
-- [`docs/authentification-v2.md`](docs/authentification-v2.md) — spec complète de l'auth.
+- [`docs/permissions.md`](docs/permissions.md) — permissions par site (hub vs perso).
 - [`docs/notifications-botpanel.md`](docs/notifications-botpanel.md) — intégration BotPanel.
-- [`docs/deploiement-proxmox.md`](docs/deploiement-proxmox.md) — guide Proxmox + Cloudflare.
-- [`docs/permissions.md`](docs/permissions.md) — permissions par site (demandées à la création).
-- [`docs/versions.md`](docs/versions.md) — versionnage (tags `vX.Y.Z`) & mises à jour.
+- [`docs/deploiement-proxmox.md`](docs/deploiement-proxmox.md) — Proxmox + Cloudflare + mise à jour.
+- [`docs/versions.md`](docs/versions.md) — versionnage (tags `vX.Y.Z`) & rollback.
+- [`docs/mobile-anti-zoom.md`](docs/mobile-anti-zoom.md) — comportement « app native » mobile.
 - [`CHANGELOG.md`](CHANGELOG.md) — historique des versions.
 
 ## Stack
 
 Flask 3 · SQLite · gunicorn · PyJWT · Jinja2 · CSS pur (thème RecipeLog).
-
-## Personnaliser pour ton projet
-
-1. Marque : `BRAND_PREFIX` / `BRAND_SUFFIX` / `BRAND_BADGE` dans `.env`, logo `panel/static/logo.svg`.
-2. Contenu : remplace `dashboard.html` + `routes/main.py` par tes écrans.
-3. Données : ajoute tes tables (décide **partagé vs cloisonné**, cf. spec §7).
-
-Ne modifie pas le thème ni la sécurité de l'auth sans raison — voir `CLAUDE.md`.
