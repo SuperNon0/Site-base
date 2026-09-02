@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Réglages — {{ brand.prefix }}{{ brand.suffix }}{% endblock %}
+{% block badge %}réglages{% endblock %}
+{% block content %}
+<div class="acct-wrap" style="max-width:560px">
+
+  <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:6px">
+    <h2 class="fl-title-serif" style="margin:0">Réglages de l'application</h2>
+    <a class="btn ghost small" href="{{ url_for('accounts.parametres') }}">Réglages du site →</a>
+  </div>
+  <p class="access-note" style="text-align:left;margin:0 0 18px">
+    Ces réglages appartiennent à <b>ton application</b> (surcouche <code>app/</code>).
+    Les réglages du <b>site</b> (Cloudflare, comptes, mises à jour) sont dans
+    <a href="{{ url_for('accounts.parametres') }}">Paramètres</a>.
+  </p>
+
+  {% if app_reglages_template %}
+    {% include app_reglages_template %}
+  {% else %}
+  <section class="acct-section">
+    <div class="fl-card">
+      <div class="acct-main">
+        <span class="acct-mail">Aucun réglage</span>
+        <span class="acct-sub">Cette application n'expose pas encore de réglages.
+          Pour en ajouter, déclare <code>APP_REGLAGES_TEMPLATE</code> dans
+          <code>app/__init__.py</code> (voir <code>app.example/</code>).</span>
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+</div>
+{% endblock %}

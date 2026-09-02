@@ -43,6 +43,7 @@ La base (`base/panel/__init__.py`) détecte `app/` et :
 | **Templates** | `app/templates/` s'ajoute et **prime** sur ceux de la base. |
 | **Tables** | `app/schema.sql` est exécuté en plus du schéma de la base. |
 | **Accueil** | ton `/` remplace l'écran de démo ; la base retrouve l'accueil via `home_url()`. |
+| **Réglages** | `flask_app.config["APP_REGLAGES_TEMPLATE"] = "app_reglages.html"` : la page `/reglages` de la base **inclut ce partial** (même thème, même cadre). |
 
 Tu réutilises tout de la base par simple import :
 
@@ -55,6 +56,24 @@ from panel.db import get_db
 **Données par utilisateur** (site cloisonné) : filtre par `current_compte()["id"]`
 (compte *effectif*, impersonation incluse). Nomme la colonne `compte_id` → la base
 sait réattribuer/fusionner ces lignes (cf. `set_email`).
+
+## Deux pages, deux mises à jour (séparation base / application)
+
+Chaque site a **deux pages de réglages** et **deux boutons de mise à jour**, tous
+dessinés par la base → **identiques sur tous tes sites** :
+
+| | Page | Met à jour | Verrouillé ? |
+|---|---|---|---|
+| **Site** (base) | `/parametres` | « Mettre à jour la base » (`sync_base`) | oui — dans `base/` |
+| **Application** (métier) | `/reglages` | « Mettre à jour l'application » (`git` du projet) | non — c'est ton `app/` |
+
+- La page `/parametres` et **les deux boutons** vivent dans la base verrouillée :
+  leur *mécanisme* ne peut pas être cassé par la surcouche, seule la *cible* change.
+- La page `/reglages` appartient à la base (cadre + thème), mais son **contenu**
+  vient de ton partial `app_reglages.html` (déclaré via `APP_REGLAGES_TEMPLATE`).
+  Stocke tes options avec `panel.settings.set_setting` / `get_setting` (table
+  `app_settings`) — pas besoin de table dédiée. Expose-les aux templates via un
+  `@bp.app_context_processor`. Voir `app.example/`.
 
 ## Mettre à jour la base (sans toucher ton projet)
 

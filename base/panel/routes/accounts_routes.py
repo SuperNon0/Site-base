@@ -101,6 +101,21 @@ def parametres():
     )
 
 
+@bp.route("/reglages")
+@login_required
+def reglages():
+    """Réglages de l'APPLICATION (surcouche), rendus dans le gabarit de la base.
+
+    La page (cadre, thème, en-tête) appartient à la base — donc identique sur
+    tous les sites. Son *contenu* est fourni par la surcouche : si `app/`
+    déclare `APP_REGLAGES_TEMPLATE` (voir app.example/__init__.py), ce partial
+    est inclus ici ; sinon la page affiche « aucun réglage ». La surcouche gère
+    ses propres routes d'enregistrement (POST) et stocke ses valeurs via
+    `panel.settings.set_setting` (table `app_settings`).
+    """
+    return render_template("reglages.html")
+
+
 @bp.route("/parametres/mon-email", methods=["POST"])
 @login_required
 def mon_email():

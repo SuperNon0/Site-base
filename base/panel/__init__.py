@@ -92,6 +92,9 @@ def create_app(config_object: type = Config) -> Flask:
             "can": has_capability,
             "any_admin_capability": any_admin_capability,
             "is_base_admin": is_base_admin,
+            # Point d'extension « Réglages » : partial de réglages déclaré par la
+            # surcouche (app/__init__.py → flask_app.config["APP_REGLAGES_TEMPLATE"]).
+            "app_reglages_template": app.config.get("APP_REGLAGES_TEMPLATE"),
         }
 
     # --- Toutes les routes /api/* en no-store (spec §8) ---

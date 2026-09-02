@@ -17,3 +17,8 @@ def register(flask_app) -> None:
     """Point d'entrée appelé par la base pour brancher la surcouche."""
     from .routes import bp
     flask_app.register_blueprint(bp)
+
+    # Réglages de l'application : on déclare un partial que la base inclura dans
+    # sa page /reglages (même thème, même cadre). Retire cette ligne si ton
+    # application n'a aucun réglage. Le partial vit dans app/templates/.
+    flask_app.config["APP_REGLAGES_TEMPLATE"] = "app_reglages.html"
