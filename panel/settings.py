@@ -27,6 +27,19 @@ def set_setting(cle: str, valeur: str | None) -> None:
     db.commit()
 
 
+def is_setup_done() -> bool:
+    """Vrai si la configuration de premier lancement a été validée."""
+    return get_setting("setup_done") == "1"
+
+
+def botpanel_url() -> str:
+    """URL BotPanel effective (réglage UI prioritaire, sinon `.env`)."""
+    val = get_setting("botpanel_url")
+    if val is None:
+        val = current_app.config.get("BOTPANEL_URL", "")
+    return (val or "").rstrip("/")
+
+
 def normalize_team(team: str) -> str:
     """Normalise le nom d'équipe Cloudflare : garde le NOM SEUL.
 

@@ -49,10 +49,11 @@ if [ -z "${ADMIN_EMAIL}" ] && [ -t 0 ]; then
     read -rp ">>> E-mail Google du compte admin (Entrée pour aucun) : " ADMIN_EMAIL || true
     ADMIN_EMAIL="$(printf '%s' "${ADMIN_EMAIL}" | tr -d '[:space:]')"
 fi
-GENERATED_PWD=""
+# Pas de mot de passe fourni → on ne l'invente PAS : l'écran de configuration au
+# premier lancement (dans le navigateur) le demandera.
+SETUP_UI=""
 if [ -z "${ADMIN_PASSWORD}" ]; then
-    ADMIN_PASSWORD="$(python3 -c 'import secrets; print(secrets.token_urlsafe(12))')"
-    GENERATED_PWD="${ADMIN_PASSWORD}"
+    SETUP_UI="1"
 fi
 if [ ! -f "${INSTALL_DIR}/.env" ]; then
     cp "${INSTALL_DIR}/.env.example" "${INSTALL_DIR}/.env"
@@ -85,9 +86,11 @@ echo " Installation terminée — le service tourne (127.0.0.1:8000)."
 if [ -n "${ADMIN_EMAIL}" ]; then
   echo " Super-admin (Cloudflare)   : ${ADMIN_EMAIL}"
 fi
-if [ -n "${GENERATED_PWD}" ]; then
-  echo " Mot de passe admin (LAN)   : ${GENERATED_PWD}   ← généré, note-le !"
-  echo "   (à changer via Paramètres → Mot de passe, ou deploy/reset_admin.sh)"
+if [ -n "${SETUP_UI}" ]; then
+  echo " ▸ Ouvre le site dans un navigateur : un ÉCRAN DE CONFIGURATION"
+  echo "   te demandera le mot de passe admin, Cloudflare et BotPanel."
+else
+  echo " Mot de passe admin (LAN)   : défini via ADMIN_PASSWORD."
 fi
 echo "════════════════════════════════════════════════════════════════"
 echo " Étapes restantes :"

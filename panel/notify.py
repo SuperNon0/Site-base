@@ -31,7 +31,8 @@ def notify(slug: str, **variables: object) -> bool:
         notify("acces_demande", email="jean@gmail.com")
         notify("backup_done", vmid="100", duree="2m34s", taille="2.1 Go")
     """
-    base_url = (current_app.config.get("BOTPANEL_URL") or "").rstrip("/")
+    from .settings import botpanel_url
+    base_url = botpanel_url()
     if not base_url:
         log.debug("BotPanel non configuré (BOTPANEL_URL vide) — notify(%s) ignoré", slug)
         return False

@@ -6,7 +6,7 @@ login local), la gestion des comptes et l'intégration des notifications BotPane
 
 from __future__ import annotations
 
-from flask import Flask, g, request, session
+from flask import Flask, g, redirect, request, session, url_for
 
 from .config import Config
 
@@ -27,10 +27,34 @@ def create_app(config_object: type = Config) -> Flask:
     from .routes.accounts_routes import bp as accounts_bp
     from .routes.main import bp as main_bp
     from .routes.system_routes import bp as system_bp
+    from .routes.setup_routes import bp as setup_bp
     app.register_blueprint(auth_bp)
     app.register_blueprint(accounts_bp)
     app.register_blueprint(main_bp)
     app.register_blueprint(system_bp)
+    app.register_blueprint(setup_bp)
+
+    # --- Écran de configuration au premier lancement ---
+    @app.before_request
+    def _require_setup():
+        # Laisse passer l'écran de setup lui-même et les fichiers statiques.
+        if request.endpoint in ("setup.setup", "setup.setup_post", "static"):
+            return
+        if request.path.startswith("/static"):
+            return
+        from .settings import is_setup_done
+        try:
+            if is_setup_done():
+                return
+            # Déjà un admin avec mot de passe (installé via .env) → pas de setup forcé.
+            row = db_module.get_db().execute(
+                "SELECT 1 FROM comptes WHERE role = 'super_admin' AND mdp_hash IS NOT NULL LIMIT 1"
+            ).fetchone()
+            if row is not None:
+                return
+        except Exception:  # base pas prête → ne bloque pas
+            return
+        return redirect(url_for("setup.setup"))
 
     # --- Contexte de template partagé (marque + bandeau impersonation) ---
     @app.context_processor

@@ -29,6 +29,9 @@ nouveau projet. Il fournit, prêts à l'emploi :
 7. **La config Cloudflare éditable dans l'UI + un écran Diagnostic**
    (Paramètres → « Cloudflare / Accès » et « Diagnostic »), réglages stockés en
    base (`app_settings`, prioritaires sur `.env`) — voir `panel/settings.py`.
+8. **Un écran de configuration au premier lancement** (`/setup`) : tant qu'aucun
+   admin avec mot de passe n'existe, toute visite y est redirigée (mot de passe,
+   e-mail, Cloudflare, BotPanel) — voir `panel/routes/setup_routes.py`.
 
 ### Toute la documentation (à lire selon le besoin)
 

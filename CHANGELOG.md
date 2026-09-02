@@ -7,6 +7,17 @@ publiée.
 
 ---
 
+## Non publié
+
+### Ajouté
+- **Écran de configuration au premier lancement** (`/setup`) : tant qu'aucun compte
+  admin avec mot de passe n'existe, toute visite y est redirigée. Il fixe le mot de
+  passe admin (+ e-mail), Cloudflare (équipe/AUD/vérif) et l'URL BotPanel, puis
+  disparaît. L'installateur ne génère plus de mot de passe : la config se fait à
+  l'écran. BotPanel est désormais réglable en base (`app_settings`).
+
+---
+
 ## v1.1.0 — 2026-08-17
 
 Grosse mise à jour : permissions par site, gestion des super-admins, config

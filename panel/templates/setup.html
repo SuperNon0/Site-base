@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Configuration — {{ brand.prefix }}{{ brand.suffix }}{% endblock %}
+{% block body_class %}login-page{% endblock %}
+{% block topbar %}{% endblock %}
+{% block content %}
+<form class="login-card" method="post" action="{{ url_for('setup.setup_post') }}"
+      style="max-width:520px;gap:18px">
+  <div class="login-logo">
+    <img class="logo-mark" src="{{ url_for('static', filename='logo.svg') }}" alt="" width="44" height="44">
+    <span class="logo"><span class="g">{{ brand.prefix }}</span><span class="i">{{ brand.suffix }}</span></span>
+  </div>
+  <h2>Configuration initiale</h2>
+  <p class="access-text">Premier lancement — renseigne les réglages de base. Tu
+    pourras tout modifier ensuite dans les Paramètres.</p>
+
+  <!-- Compte administrateur -->
+  <div style="text-align:left;display:flex;flex-direction:column;gap:12px">
+    <div class="fl-label">Compte administrateur</div>
+    <div>
+      <label class="fl-label" for="password">Mot de passe (min. 8)</label>
+      <input id="password" type="password" name="password" minlength="8"
+             autocomplete="new-password" required style="margin-top:6px">
+    </div>
+    <div>
+      <label class="fl-label" for="confirm">Confirmer le mot de passe</label>
+      <input id="confirm" type="password" name="confirm" minlength="8"
+             autocomplete="new-password" required style="margin-top:6px">
+    </div>
+    <div>
+      <label class="fl-label" for="email">E-mail Google (optionnel)</label>
+      <input id="email" type="email" name="email" value="{{ email or '' }}"
+             placeholder="toi@gmail.com" style="margin-top:6px">
+    </div>
+  </div>
+
+  <!-- Cloudflare -->
+  <div style="text-align:left;display:flex;flex-direction:column;gap:12px">
+    <div class="fl-label">Cloudflare Access (optionnel)</div>
+    <div>
+      <label class="fl-label" for="team">Équipe (nom seul, ex. super-nono)</label>
+      <input id="team" type="text" name="team" value="{{ cf.team or '' }}"
+             placeholder="super-nono" style="margin-top:6px">
+    </div>
+    <div>
+      <label class="fl-label" for="aud">AUD (Application Audience tag)</label>
+      <input id="aud" type="text" name="aud" value="{{ cf.aud or '' }}" style="margin-top:6px">
+    </div>
+    <label style="display:flex;align-items:center;gap:8px;font-size:0.8rem">
+      <input type="checkbox" name="verify" value="1" {{ 'checked' if cf.verify }} style="width:auto">
+      Vérifier le JWT Cloudflare (recommandé en production)
+    </label>
+  </div>
+
+  <!-- BotPanel -->
+  <div style="text-align:left;display:flex;flex-direction:column;gap:12px">
+    <div class="fl-label">Notifications BotPanel (optionnel)</div>
+    <div>
+      <label class="fl-label" for="botpanel">URL BotPanel</label>
+      <input id="botpanel" type="text" name="botpanel" value="{{ botpanel or '' }}"
+             placeholder="http://192.168.1.20:8080" style="margin-top:6px">
+    </div>
+  </div>
+
+  <button type="submit" class="btn primary full">Terminer la configuration</button>
+  <p class="access-note">Cet écran ne s'affiche qu'au premier lancement.</p>
+</form>
+{% endblock %}
