@@ -6,6 +6,13 @@
   <meta name="theme-color" content="#0e0f11">
   <title>{% block title %}{{ brand.prefix }}{{ brand.suffix }}{% endblock %}</title>
   <link rel="icon" href="{{ url_for('static', filename='logo.svg') }}">
+  {# --- PWA : installable + « app native » sur mobile --- #}
+  <link rel="manifest" href="{{ url_for('pwa.manifest') }}">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="{{ brand.prefix }}{{ brand.suffix }}">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-180.png') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='fonts.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   {% block head %}{% endblock %}
@@ -45,5 +52,13 @@
   {% endwith %}
 
   {% block content %}{% endblock %}
+
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", function () {
+        navigator.serviceWorker.register("{{ url_for('pwa.sw') }}").catch(function () {});
+      });
+    }
+  </script>
 </body>
 </html>

@@ -28,17 +28,20 @@ def create_app(config_object: type = Config) -> Flask:
     from .routes.main import bp as main_bp
     from .routes.system_routes import bp as system_bp
     from .routes.setup_routes import bp as setup_bp
+    from .routes.pwa_routes import bp as pwa_bp
     app.register_blueprint(auth_bp)
     app.register_blueprint(accounts_bp)
     app.register_blueprint(main_bp)
     app.register_blueprint(system_bp)
     app.register_blueprint(setup_bp)
+    app.register_blueprint(pwa_bp)
 
     # --- Écran de configuration au premier lancement ---
     @app.before_request
     def _require_setup():
-        # Laisse passer l'écran de setup lui-même et les fichiers statiques.
-        if request.endpoint in ("setup.setup", "setup.setup_post", "static"):
+        # Laisse passer l'écran de setup, les statiques et les fichiers PWA.
+        if request.endpoint in ("setup.setup", "setup.setup_post", "static",
+                                "pwa.manifest", "pwa.sw"):
             return
         if request.path.startswith("/static"):
             return
