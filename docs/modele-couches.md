@@ -92,6 +92,13 @@ dessinés par la base → **identiques sur tous tes sites** :
 dans le dépôt site-base (demande-la), une version est publiée, et chaque projet
 clique « Mettre à jour la base ». Tout ton travail vit dans `app/`.
 
+**Développe le métier sur sa propre branche, indépendante de la base.** Le métier
+(`app/`) et la fondation (`base/`) ne se croisent jamais dans une même branche : tes
+commits ne touchent **que** `app/`. La base n'est pas versionnée avec ton métier —
+elle arrive/repart via `sync_base`. Résultat : tu fais évoluer ton application sans
+jamais risquer de casser (ni de figer) la base, et les mises à jour de base restent
+indolores.
+
 ## Verrou : la base **ne peut pas** être modifiée (pas seulement « ne doit pas »)
 
 Deux garde-fous, en plus de la règle ci-dessus :

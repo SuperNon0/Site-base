@@ -12,6 +12,14 @@
 > Le code de la fondation vit sous `base/panel/` (mêmes fichiers que décrits plus
 > bas, préfixés `base/`). On y touche **uniquement dans le dépôt site-base**,
 > jamais dans un projet.
+>
+> - **Développe le métier sur une branche dédiée, indépendante de la base.** Une
+>   branche (ou un dépôt) ne mélange jamais du métier (`app/`) et de la fondation
+>   (`base/`). Tes commits ne portent **que** sur `app/`. La base n'évolue jamais
+>   dans ta branche métier : elle se met à jour par « Mettre à jour la base »
+>   (`sync_base`), ou est modifiée séparément dans le dépôt site-base. Si tu penses
+>   qu'il faut changer `base/`, **arrête-toi et demande au propriétaire** — ça se
+>   fait ailleurs, pas ici.
 
 > Ce fichier fixe le **contrat** : ce qui doit être reproduit **à l'identique**,
 > et ce qui est libre.
