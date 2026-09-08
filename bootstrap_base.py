@@ -6,9 +6,9 @@ fournie par ton dépôt site-base et récupérée ici. Ce script est volontairem
 AUTONOME (bibliothèque standard uniquement, aucun import de `panel`) : il doit
 pouvoir tourner alors que `base/` n'existe pas encore.
 
-    python bootstrap_base.py                 # dernière version « couches » publiée
+    python bootstrap_base.py                 # dernière version publiée, sinon main
     python bootstrap_base.py --ref 2.1.0     # une version précise
-    BASE_REPO_REF=claude/v2-modele-couches python bootstrap_base.py   # une branche
+    BASE_REPO_REF=une-branche python bootstrap_base.py   # une branche précise
 
 Ensuite : `python run.py`. Pour METTRE À JOUR la base après coup, utilise le
 bouton « Mettre à jour la base » (Paramètres) ou `python manage.py sync_base` —
@@ -72,13 +72,9 @@ def main() -> None:
     url = os.getenv("BASE_REPO_URL", DEFAULT_URL)
 
     if not ref:
-        ref = _latest_ref(url)
-    if not ref:
-        print("✗ Aucune version « couches » (≥ 2.0.0) publiée sur le dépôt.\n"
-              "  En attendant, vise une branche ou un tag précis :\n"
-              "    BASE_REPO_REF=claude/v2-modele-couches python bootstrap_base.py\n"
-              "    python bootstrap_base.py --ref 2.0.0", file=sys.stderr)
-        sys.exit(1)
+        # Dernière version publiée (tag ≥ 2.0.0) ; sinon la branche par défaut
+        # « main » du dépôt site-base (qui porte le modèle en couches).
+        ref = _latest_ref(url) or "main"
 
     tmp = tempfile.mkdtemp()
     try:

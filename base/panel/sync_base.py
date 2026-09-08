@@ -69,9 +69,8 @@ def latest_ref(url: str) -> str | None:
 
 def sync(ref: str | None = None) -> dict:
     url = _cfg("BASE_REPO_URL", DEFAULT_URL)
-    ref = ref or _cfg("BASE_REPO_REF", "") or latest_ref(url)
-    if not ref:
-        return {"ok": False, "error": "Aucune version de base trouvée sur le dépôt."}
+    # Version demandée → réglage → dernière version publiée (tag ≥ 2.0.0) → main.
+    ref = ref or _cfg("BASE_REPO_REF", "") or latest_ref(url) or "main"
 
     before = read_version()
     tmp = tempfile.mkdtemp()
