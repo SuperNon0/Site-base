@@ -7,6 +7,39 @@ publiée.
 
 ---
 
+## 2.0.0 — Modèle en couches
+
+Refonte majeure : le site de base devient une **fondation en deux couches**. Une
+**base** commune et verrouillée (login, thème, permissions, Paramètres, mises à
+jour) et une **surcouche projet** (`app/`) où vit tout le métier — sans jamais
+toucher à la base.
+
+### Ajouté
+- **Modèle en couches** `base/` + `app/` : la base détecte `app/` et l'assemble
+  (blueprints via `register()`, templates qui priment, `app/schema.sql`).
+  Voir [`docs/modele-couches.md`](docs/modele-couches.md).
+- **`base/` non versionnée dans un projet** : fournie par **`bootstrap_base.py`**
+  (amorceur autonome) à l'installation, et par « Mettre à jour la base »
+  (`sync_base`). Un projet ne committe jamais `base/` (`.gitignore`).
+- **Deux mises à jour distinctes** : « Mettre à jour la base » (`sync_base`, depuis
+  le dépôt site-base) et « Mettre à jour l'application » (git du projet).
+- **Deux pages** : `/parametres` (réglages du site, base) et **`/reglages`**
+  (réglages de l'application) via le point d'extension `APP_REGLAGES_TEMPLATE`.
+- **Verrou de la base** : CI `protect-base.yml` + hook `pre-commit` empêchent
+  toute modification de `base/` dans un projet.
+- **Batterie de tests** [`tests/test_site.py`](tests/test_site.py) (50 vérifs,
+  sans dépendance).
+- **Prompt de migration** prêt à donner à un dev IA :
+  [`docs/prompt-migration.md`](docs/prompt-migration.md).
+
+### Modifié
+- `bootstrap_base.py` et `sync_base` prennent la dernière version publiée
+  (tag ≥ 2.0.0), et à défaut la branche `main` du site-base.
+- `main` porte désormais le modèle en couches. L'ancien modèle « à plat » reste
+  disponible sur la branche `legacy-v1-plat`.
+
+---
+
 ## v1.1.0 — 2026-08-17
 
 Grosse mise à jour : permissions par site, gestion des super-admins, config
