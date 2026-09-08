@@ -69,31 +69,41 @@ def latest_ref(url: str) -> str | None:
 
 def sync(ref: str | None = None) -> dict:
     url = _cfg("BASE_REPO_URL", DEFAULT_URL)
-    # Version demandée → réglage → dernière version publiée (tag ≥ 2.0.0) → main.
-    ref = ref or _cfg("BASE_REPO_REF", "") or latest_ref(url) or "main"
+    # Candidats, dans l'ordre : version demandée/réglée → dernière version publiée
+    # → branche « main ». On saute tout candidat sans couche base/ (ex. un tag mal
+    # placé sur l'ancien modèle « à plat ») : jamais de casse.
+    asked = ref or _cfg("BASE_REPO_REF", "")
+    if asked:
+        candidates = [asked]
+    else:
+        latest = latest_ref(url)
+        candidates = ([latest] if latest else []) + ["main"]
 
     before = read_version()
-    tmp = tempfile.mkdtemp()
-    try:
-        rc, _out, err = _run(["git", "clone", "--depth", "1", "--branch", ref, url, tmp], 300)
-        if rc != 0:
-            return {"ok": False, "error": f"Clone de « {ref} » échoué : {err[:300]}"}
-        src = Path(tmp) / "base" / "panel"
-        if not src.is_dir():
-            return {"ok": False,
-                    "error": f"La version « {ref} » n'a pas de couche base/ "
-                             "(ce n'est pas un modèle en couches)."}
-        # Remplace UNIQUEMENT base/panel (app/ n'est pas touché).
-        dst = BASE_DIR / "panel"
-        if dst.exists():
-            shutil.rmtree(dst)
-        shutil.copytree(src, dst, ignore=shutil.ignore_patterns("__pycache__"))
-        src_ver = (Path(tmp) / "base" / ".base-version")
-        version = src_ver.read_text(encoding="utf-8").strip() if src_ver.exists() else ref.lstrip("v")
-        (BASE_DIR / ".base-version").write_text(version + "\n", encoding="utf-8")
-        return {"ok": True, "from": before, "to": version}
-    finally:
-        shutil.rmtree(tmp, ignore_errors=True)
+    errors = []
+    for cand in candidates:
+        tmp = tempfile.mkdtemp()
+        try:
+            rc, _out, err = _run(["git", "clone", "--depth", "1", "--branch", cand, url, tmp], 300)
+            src = Path(tmp) / "base" / "panel"
+            if rc != 0:
+                errors.append(f"{cand}: clone échoué")
+                continue
+            if not src.is_dir():
+                errors.append(f"{cand}: pas de couche base/")
+                continue
+            # Remplace UNIQUEMENT base/panel (app/ n'est pas touché).
+            dst = BASE_DIR / "panel"
+            if dst.exists():
+                shutil.rmtree(dst)
+            shutil.copytree(src, dst, ignore=shutil.ignore_patterns("__pycache__"))
+            src_ver = (Path(tmp) / "base" / ".base-version")
+            version = src_ver.read_text(encoding="utf-8").strip() if src_ver.exists() else cand.lstrip("v")
+            (BASE_DIR / ".base-version").write_text(version + "\n", encoding="utf-8")
+            return {"ok": True, "from": before, "to": version}
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+    return {"ok": False, "error": "Aucune version exploitable — " + " ; ".join(errors)}
 
 
 def main() -> None:

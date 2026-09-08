@@ -63,6 +63,22 @@ def _latest_ref(url: str) -> str | None:
     return couches[0] if couches else None
 
 
+def _clone_base(url: str, ref: str) -> str | None:
+    """Clone `url` à `ref` dans un dossier temporaire ; renvoie le chemin de la
+    couche base/ si elle existe, sinon None (et nettoie)."""
+    tmp = tempfile.mkdtemp()
+    print(f">>> Récupération de la base « {ref} » depuis {url}")
+    rc, _out, err = _run(["git", "clone", "--depth", "1", "--branch", ref, url, tmp], 300)
+    if rc == 0 and (Path(tmp) / "base" / "panel").is_dir():
+        return tmp
+    if rc != 0:
+        print(f"   (« {ref} » : clone échoué : {err[:150].strip()})", file=sys.stderr)
+    else:
+        print(f"   (« {ref} » : pas de couche base/ — ignorée)", file=sys.stderr)
+    shutil.rmtree(tmp, ignore_errors=True)
+    return None
+
+
 def main() -> None:
     args = sys.argv[1:]
     ref = None
@@ -71,23 +87,27 @@ def main() -> None:
     ref = ref or os.getenv("BASE_REPO_REF") or None
     url = os.getenv("BASE_REPO_URL", DEFAULT_URL)
 
-    if not ref:
-        # Dernière version publiée (tag ≥ 2.0.0) ; sinon la branche par défaut
-        # « main » du dépôt site-base (qui porte le modèle en couches).
-        ref = _latest_ref(url) or "main"
+    # Candidats, dans l'ordre : version demandée → dernière version publiée →
+    # branche « main ». On saute tout candidat qui n'a pas de couche base/ (ex.
+    # un tag mal placé sur l'ancien modèle « à plat ») : jamais de casse.
+    if ref:
+        candidates = [ref]
+    else:
+        latest = _latest_ref(url)
+        candidates = ([latest] if latest else []) + ["main"]
 
-    tmp = tempfile.mkdtemp()
+    tmp = None
+    for cand in candidates:
+        tmp = _clone_base(url, cand)
+        if tmp:
+            break
+    if not tmp:
+        print("✗ Aucune version exploitable trouvée (essayés : "
+              f"{', '.join(candidates)}).", file=sys.stderr)
+        sys.exit(1)
+
     try:
-        print(f">>> Récupération de la base « {ref} » depuis {url}")
-        rc, _out, err = _run(["git", "clone", "--depth", "1", "--branch", ref, url, tmp], 300)
-        if rc != 0:
-            print(f"✗ Clone de « {ref} » échoué : {err[:300]}", file=sys.stderr)
-            sys.exit(1)
         src = Path(tmp) / "base"
-        if not (src / "panel").is_dir():
-            print(f"✗ La version « {ref} » n'a pas de couche base/ "
-                  "(ce n'est pas un modèle en couches).", file=sys.stderr)
-            sys.exit(1)
         if DEST.exists():
             shutil.rmtree(DEST)
         shutil.copytree(src, DEST, ignore=shutil.ignore_patterns("__pycache__"))
