@@ -9,18 +9,29 @@
 
 ```
 ton-projet/
-├── base/                 ← LA BASE (verrouillée — ne jamais éditer)
+├── base/                 ← LA BASE (NON versionnée — fournie par bootstrap)
 │    ├── panel/…              login, thème, permissions, Paramètres, Cloudflare…
 │    └── .base-version        version installée (ex. 2.0.0)
-├── app/                  ← TON PROJET (tout ce que tu ajoutes)
+├── app/                  ← TON PROJET (tout ce que tu ajoutes, versionné)
 │    ├── __init__.py          register(flask_app) : branche tes écrans
 │    ├── routes.py            tes pages
 │    ├── templates/           tes écrans (priment sur ceux de la base)
 │    └── schema.sql           tes tables métier
+├── bootstrap_base.py     récupère base/ depuis le dépôt site-base (autonome)
 ├── run.py / wsgi.py      démarrage (assemble base/ + app/)
 ├── manage.py             commandes (setup, reset_admin, set_email, sync_base)
 └── requirements.txt
 ```
+
+> ### 🔑 `base/` n'est PAS versionnée dans un projet
+> La base est la **source de vérité de ton dépôt site-base**, pas du projet. Dans
+> un projet, `base/` est **ignorée par Git** (`.gitignore` → `base/`) et
+> **récupérée** depuis site-base par `bootstrap_base.py` (à l'installation) et par
+> « Mettre à jour la base » (`sync_base`). Conséquences :
+> - Le dev **ne peut rien pousser qui concerne la base** — il n'y a rien de base
+>   sous Git. Le verrou n'a plus de faux positif à l'import.
+> - Tu changes la base **une seule fois** dans site-base → tous les projets la
+>   récupèrent, toujours identique.
 
 Sans dossier `app/`, la base tourne seule (écran de démo). Un modèle prêt à
 copier est fourni : **`app.example/`** → copie-le en `app/`.
@@ -28,10 +39,15 @@ copier est fourni : **`app.example/`** → copie-le en `app/`.
 ## Créer un nouveau projet
 
 ```bash
-cp -r app.example app          # ta surcouche de départ
+python bootstrap_base.py       # récupère base/ (fondation) depuis site-base
+cp -r app.example app          # ta surcouche de départ (la seule chose versionnée)
+echo "base/" >> .gitignore     # base/ n'est jamais committée dans un projet
 # édite app/routes.py, app/templates/, app/schema.sql
 python run.py                  # http://127.0.0.1:8000
 ```
+
+> Tant que la version `2.0.0` du site-base n'est pas publiée en tag, vise la
+> branche : `BASE_REPO_REF=claude/v2-modele-couches python bootstrap_base.py`.
 
 ## Comment la surcouche se branche (sans toucher la base)
 

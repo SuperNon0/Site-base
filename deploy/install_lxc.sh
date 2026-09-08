@@ -35,6 +35,13 @@ if [ -n "${REPO_URL}" ]; then
 fi
 mkdir -p "${INSTALL_DIR}/data"
 
+# Modèle en couches : un PROJET ne versionne PAS base/. Si la fondation n'est pas
+# présente (dépôt app-only), on l'amorce depuis le dépôt site-base.
+if [ ! -d "${INSTALL_DIR}/base/panel" ] && [ -f "${INSTALL_DIR}/bootstrap_base.py" ]; then
+    echo ">>> [3b/6] Amorçage de la couche base (bootstrap_base.py)"
+    (cd "${INSTALL_DIR}" && python3 bootstrap_base.py)
+fi
+
 echo ">>> [4/6] Venv Python + dépendances"
 python3 -m venv "${INSTALL_DIR}/.venv"
 "${INSTALL_DIR}/.venv/bin/pip" install --upgrade pip

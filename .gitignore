@@ -4,6 +4,12 @@ data/
 *.db
 *.sqlite
 
+# --- Modèle en couches ---
+# Dans le dépôt SITE-BASE (ici), base/ EST versionnée : c'est la source.
+# Dans un PROJET, base/ n'est PAS versionnée (fournie par bootstrap_base.py /
+# « Mettre à jour la base »). → dans un projet, dé-commente la ligne suivante :
+# base/
+
 # Python
 __pycache__/
 *.py[cod]

@@ -75,9 +75,16 @@ Sans dossier `app/`, la base tourne seule (écran de démo).
 ## Ajouter ton métier (le workflow)
 
 ```bash
-cp -r app.example app          # démarre ton projet (une seule fois)
+python bootstrap_base.py       # récupère base/ (fondation) depuis site-base
+cp -r app.example app          # démarre ton projet (la SEULE chose versionnée)
+echo "base/" >> .gitignore     # base/ n'est jamais committée dans un projet
 python run.py                  # l'accueil devient celui de app/
 ```
+
+> **`base/` n'est pas versionnée dans un projet** : elle est fournie par
+> `bootstrap_base.py` (installation) et par « Mettre à jour la base » (`sync_base`).
+> Le dev ne peut donc rien pousser qui concerne la base. Prompt prêt à donner à un
+> dev IA : [`docs/prompt-migration.md`](docs/prompt-migration.md).
 
 Tu édites **uniquement** `app/` :
 
@@ -212,6 +219,7 @@ LXC prioritaire, service systemd, tunnel Cloudflare, mise à jour sans sudo
 
 - [`CLAUDE.md`](CLAUDE.md) — **contrat de reproduction** (à lire en premier).
 - [`docs/modele-couches.md`](docs/modele-couches.md) — **base verrouillée + surcouche** (l'essentiel du dev IA).
+- [`docs/prompt-migration.md`](docs/prompt-migration.md) — **prompt prêt à donner** à un dev IA pour migrer/démarrer un site.
 - [`docs/guide-developpeur.md`](docs/guide-developpeur.md) — comprendre le code (architecture, pourquoi, recettes).
 - [`docs/authentification-v2.md`](docs/authentification-v2.md) — spec complète de l'auth (sécurité §9).
 - [`docs/theme-recipelog.md`](docs/theme-recipelog.md) — cahier des charges du thème.

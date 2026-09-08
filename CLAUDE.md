@@ -8,6 +8,10 @@
 >   jour la base », ou `python manage.py sync_base`).
 > - **`app/`** = ton projet (tes écrans, tes tables). **Tout ton travail va ici**,
 >   sans toucher `base/`. Modèle de départ : `app.example/` (copie-le en `app/`).
+> - **`base/` n'est PAS versionnée dans un projet** : elle est ignorée par Git
+>   (`.gitignore` → `base/`) et fournie par `bootstrap_base.py` (installation) +
+>   « Mettre à jour la base » (`sync_base`). Ne la committe jamais. Prompt prêt à
+>   l'emploi : [`docs/prompt-migration.md`](docs/prompt-migration.md).
 >
 > Le code de la fondation vit sous `base/panel/` (mêmes fichiers que décrits plus
 > bas, préfixés `base/`). On y touche **uniquement dans le dépôt site-base**,
