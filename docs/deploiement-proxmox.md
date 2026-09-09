@@ -43,6 +43,37 @@ Deux couches de sécurité **complémentaires** (voir `authentification-v2.md` �
 
 ---
 
+## 0. Tout en une commande (créer le conteneur + installer)
+
+Sur l'**hôte Proxmox** (shell du nœud), une seule commande crée le conteneur LXC
+**et** installe le site dedans :
+
+```bash
+ADMIN_EMAIL=toi@gmail.com \
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/SuperNon0/Site-base/main/deploy/proxmox_create_lxc.sh)"
+```
+
+Installer un **projet précis** (ex. VTC depuis sa branche de migration) :
+
+```bash
+ADMIN_EMAIL=toi@gmail.com \
+REPO_URL=https://github.com/SuperNon0/VTC.git \
+REPO_REF=claude/migration-nouveau-socle \
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/SuperNon0/Site-base/main/deploy/proxmox_create_lxc.sh)"
+```
+
+Le script choisit un id libre, télécharge le template Debian 12 si besoin, crée le
+conteneur (1 cœur / 512 Mo / 4 Go, DHCP, `nesting=1`), l'installe et affiche l'**IP
+du conteneur** + les identifiants. Réglages via variables : `VMID`, `CT_HOSTNAME`,
+`STORAGE`, `BRIDGE`, `CORES`, `MEMORY`, `DISK`, `ADMIN_PASSWORD`… (voir l'en-tête du
+script `deploy/proxmox_create_lxc.sh`).
+
+> ⚠️ Cette commande se lance **sur l'hôte Proxmox**, pas dans un conteneur. À
+> l'inverse, `install.sh` (§2) se lance **dans** un conteneur/VM déjà créé. Si tu
+> lances `install.sh` sur l'hôte, il s'installe sur l'hôte (pas ce que tu veux).
+
+Les sections suivantes détaillent les étapes **manuelles** équivalentes.
+
 ## 1. Créer le conteneur LXC (option recommandée)
 
 Sur l'hôte Proxmox (shell du nœud) :
