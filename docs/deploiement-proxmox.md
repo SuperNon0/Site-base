@@ -43,18 +43,21 @@ Deux couches de sécurité **complémentaires** (voir `authentification-v2.md` �
 
 ---
 
-## 0. Tout en une commande (créer le conteneur + installer)
+## ⚡ Installation express en une commande (recommandé)
 
-Sur l'**hôte Proxmox** (shell du nœud), une seule commande crée le conteneur LXC
-**et** installe le site dedans :
+**Une seule commande, à lancer sur l'HÔTE Proxmox** (le shell du nœud, ex.
+`root@pve`). Tu y mets **ton e-mail**, et elle fait tout : crée le conteneur LXC,
+installe **les dépendances du site de base + la surcouche du projet (`app/`)**,
+crée le compte admin, démarre le service, et affiche l'**IP du conteneur**.
 
+**Installer le site de base seul :**
 ```bash
 ADMIN_EMAIL=toi@gmail.com \
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/SuperNon0/Site-base/main/deploy/proxmox_create_lxc.sh)"
 ```
 
-Installer un **projet précis** (ex. VTC depuis sa branche de migration) :
-
+**Installer un projet précis** (ex. VTC depuis sa branche de migration) — c'est la
+même commande, tu ajoutes juste le dépôt et la branche :
 ```bash
 ADMIN_EMAIL=toi@gmail.com \
 REPO_URL=https://github.com/SuperNon0/VTC.git \
@@ -62,19 +65,31 @@ REPO_REF=claude/migration-nouveau-socle \
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/SuperNon0/Site-base/main/deploy/proxmox_create_lxc.sh)"
 ```
 
-Le script choisit un id libre, télécharge le template Debian 12 si besoin, crée le
-conteneur (1 cœur / 512 Mo / 4 Go, DHCP, `nesting=1`), l'installe et affiche l'**IP
-du conteneur** + les identifiants. Réglages via variables : `VMID`, `CT_HOSTNAME`,
-`STORAGE`, `BRIDGE`, `CORES`, `MEMORY`, `DISK`, `ADMIN_PASSWORD`… (voir l'en-tête du
-script `deploy/proxmox_create_lxc.sh`).
+Ce que la commande installe, dans l'ordre :
+1. **crée le conteneur LXC** Debian 12 (id libre auto, 1 cœur / 512 Mo / 4 Go, DHCP,
+   `nesting=1`) — télécharge le template si besoin ;
+2. **récupère la fondation** (`base/`, version publiée du site-base) via
+   `bootstrap_base.py`, **plus le code du projet** (`app/`) depuis `REPO_URL`/`REPO_REF` ;
+3. installe les dépendances Python, crée le `.env` avec **ton e-mail admin**, et
+   démarre le service `systemd` ;
+4. affiche l'**IP du conteneur** + le mot de passe admin.
 
-> ⚠️ Cette commande se lance **sur l'hôte Proxmox**, pas dans un conteneur. À
-> l'inverse, `install.sh` (§2) se lance **dans** un conteneur/VM déjà créé. Si tu
-> lances `install.sh` sur l'hôte, il s'installe sur l'hôte (pas ce que tu veux).
+Réglages en préfixe (optionnels) : `VMID=`, `CT_HOSTNAME=`, `STORAGE=`, `BRIDGE=`,
+`CORES=`, `MEMORY=`, `DISK=`, `ADMIN_PASSWORD=` (voir l'en-tête de
+`deploy/proxmox_create_lxc.sh`).
 
-Les sections suivantes détaillent les étapes **manuelles** équivalentes.
+> ⚠️ **Hôte vs conteneur.** Cette commande (`proxmox_create_lxc.sh`) se lance **sur
+> l'hôte Proxmox** : c'est elle qui crée le conteneur. Le script `install.sh` (§2),
+> lui, se lance **DANS** un conteneur/VM déjà créé. Si tu lances `install.sh` sur
+> l'hôte par erreur, il s'installe sur l'hôte (voir le nettoyage en fin de §1).
 
-## 1. Créer le conteneur LXC (option recommandée)
+> 💡 **Si le LXC ne convient pas** (le script échoue, besoin noyau particulier,
+> isolation renforcée) → bascule en **machine virtuelle** : voir « Repli VM » en §1.
+
+Les sections suivantes détaillent les étapes **manuelles** équivalentes (utile pour
+comprendre, dépanner, ou passer en VM).
+
+## 1. Créer le conteneur LXC (à la main)
 
 Sur l'hôte Proxmox (shell du nœud) :
 
@@ -100,11 +115,51 @@ pct exec 120 -- bash -c "apt-get update && apt-get install -y curl git"
 > `nesting=1` évite les soucis avec systemd dans un LXC non privilégié.
 > 512 Mo de RAM et 1 cœur suffisent largement pour ce site.
 
-### Repli VM (si LXC impossible)
+### Repli VM (si le LXC ne convient pas)
 
-Crée une VM Debian 12 minimale (2 Go RAM, 10 Go disque) via l'assistant Proxmox
-ou cloud-init, puis suis les mêmes étapes §2 → §5 à l'intérieur. Rien d'autre ne
-change.
+Le LXC couvre 99 % des cas. Passe en VM seulement si nécessaire (besoin noyau
+particulier, isolation renforcée, ou `nesting`/systemd bloqués sur ton nœud).
+**L'application s'installe exactement pareil** : c'est uniquement la création de la
+machine qui change — l'install applicative reste `install.sh`.
+
+1. **Crée une VM Debian 12** (2 Go RAM, 10 Go disque) — deux options :
+   - **Assistant Proxmox** : *Create VM* → ISO Debian 12 → installe Debian minimal.
+   - **Image cloud (plus rapide)** :
+     ```bash
+     # sur l'hôte Proxmox
+     wget https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-genericcloud-amd64.qcow2
+     qm create 130 --name site-base --memory 2048 --cores 2 --net0 virtio,bridge=vmbr0
+     qm importdisk 130 debian-12-genericcloud-amd64.qcow2 local-lvm
+     qm set 130 --scsihw virtio-scsi-pci --scsi0 local-lvm:vm-130-disk-0
+     qm set 130 --ide2 local-lvm:cloudinit --boot c --bootdisk scsi0 --serial0 socket
+     qm set 130 --ipconfig0 ip=dhcp --ciuser admin --cipassword 'ChoisisUnMotDePasse'
+     qm resize 130 scsi0 +8G
+     qm start 130
+     ```
+2. **Connecte-toi à la VM** (console Proxmox ou SSH) **en root**.
+3. **Lance la même install express** que pour le LXC :
+   ```bash
+   ADMIN_EMAIL=toi@gmail.com \
+   REPO_URL=https://github.com/SuperNon0/VTC.git \
+   REPO_REF=claude/migration-nouveau-socle \
+   bash -c "$(curl -fsSL https://raw.githubusercontent.com/SuperNon0/Site-base/main/install.sh)"
+   ```
+4. Continue en §3 (Cloudflare) — identique au LXC.
+
+> Il n'y a pas de script « une commande » pour la VM (la création d'une VM +
+> cloud-init dépend trop de ton stockage/réseau). Mais une fois la VM créée,
+> **l'installation est la même commande `install.sh`** que dans un conteneur.
+
+### Nettoyer une install faite par erreur sur l'hôte Proxmox
+
+Si tu as lancé `install.sh` **sur l'hôte** au lieu d'un conteneur, retire-la (ça ne
+touche à aucun conteneur ni VM) :
+```bash
+systemctl disable --now site-base 2>/dev/null || true
+rm -f /etc/systemd/system/site-base.service
+systemctl daemon-reload
+rm -rf /opt/site-base
+```
 
 ---
 

@@ -208,9 +208,21 @@ Maquettes de référence : [`docs/maquettes-auth-v2/`](docs/maquettes-auth-v2/).
 
 ## Déploiement (Proxmox + Cloudflare)
 
-LXC prioritaire, service systemd, tunnel Cloudflare, mise à jour sans sudo
-(SIGHUP gunicorn). Scripts dans `deploy/` (`install_lxc.sh`, `site-base.service`,
-`update.sh`, `set_email.sh`, `reset_admin.sh`). Guide complet :
+**Une seule commande, sur l'hôte Proxmox** : crée le conteneur LXC **et** installe
+tout dedans (base + surcouche projet), avec ton e-mail admin.
+
+```bash
+ADMIN_EMAIL=toi@gmail.com \
+REPO_URL=https://github.com/SuperNon0/TON-PROJET.git \
+REPO_REF=main \
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/SuperNon0/Site-base/main/deploy/proxmox_create_lxc.sh)"
+```
+
+(Sans `REPO_URL`/`REPO_REF`, elle installe le site de base seul.) Si un LXC ne
+convient pas, **repli en VM** : même `install.sh` à l'intérieur. LXC prioritaire,
+service systemd, tunnel Cloudflare, mise à jour sans sudo (SIGHUP gunicorn).
+Scripts dans `deploy/` (`proxmox_create_lxc.sh`, `install.sh`, `install_lxc.sh`,
+`site-base.service`, `update.sh`, `set_email.sh`, `reset_admin.sh`). Guide complet :
 [`docs/deploiement-proxmox.md`](docs/deploiement-proxmox.md).
 
 ---

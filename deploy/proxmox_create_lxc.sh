@@ -46,6 +46,16 @@ if ! command -v pct >/dev/null 2>&1; then
   exit 1
 fi
 
+# En cas d'échec pendant la création/démarrage du conteneur, on oriente vers la VM.
+_on_error() {
+  echo "" >&2
+  echo "✗ La création/installation du conteneur LXC a échoué." >&2
+  echo "  Si ton nœud n'accepte pas ce LXC (nesting/systemd, stockage…), bascule" >&2
+  echo "  en machine virtuelle : voir « Repli VM » dans docs/deploiement-proxmox.md" >&2
+  echo "  (crée la VM, puis lance install.sh À L'INTÉRIEUR — même commande)." >&2
+}
+trap _on_error ERR
+
 # --- VMID : fourni, sinon prochain id libre ------------------------------------
 if [ -z "${VMID:-}" ]; then
   VMID="$(pvesh get /cluster/nextid 2>/dev/null || echo 120)"
