@@ -7,6 +7,22 @@ publiée.
 
 ---
 
+## 2.0.1 — Déploiement en une commande + navigation
+
+### Ajouté
+- **Proxmox : installation en une commande** depuis l'hôte
+  (`deploy/proxmox_create_lxc.sh`) : crée le conteneur LXC **et** installe le site
+  dedans (base + surcouche projet), avec l'e-mail admin. Doc §express + repli VM
+  détaillé + nettoyage d'une install faite par erreur sur l'hôte.
+- **`install.sh` gère `REPO_REF`** : installer un projet depuis une branche ou un
+  tag précis (utile avant une fusion dans `main`).
+
+### Modifié
+- **Navigation Paramètres / Réglages** : de vrais boutons « ← Accueil » et
+  « Réglages de l'application → » / « Paramètres du site → » (au lieu de texte
+  cliquable) ; le **logo de la barre** ramène à l'accueil depuis n'importe quelle
+  page. `home_url` injecté dans les templates.
+
 ## 2.0.0 — Modèle en couches
 
 Refonte majeure : le site de base devient une **fondation en deux couches**. Une
