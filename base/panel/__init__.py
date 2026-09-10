@@ -74,7 +74,7 @@ def create_app(config_object: type = Config) -> Flask:
     # --- Contexte de template partagé (marque + bandeau impersonation) ---
     @app.context_processor
     def inject_globals():
-        from .auth import get_compte, is_base_admin
+        from .auth import get_compte, home_url, is_base_admin
         from .permissions import any_admin_capability, has_capability
         impersonation = None
         if session.get("impersonator_id"):
@@ -92,6 +92,8 @@ def create_app(config_object: type = Config) -> Flask:
             "can": has_capability,
             "any_admin_capability": any_admin_capability,
             "is_base_admin": is_base_admin,
+            # URL de l'accueil (surcouche app/ ou démo base) pour les liens « retour ».
+            "home_url": home_url,
             # Point d'extension « Réglages » : partial de réglages déclaré par la
             # surcouche (app/__init__.py → flask_app.config["APP_REGLAGES_TEMPLATE"]).
             "app_reglages_template": app.config.get("APP_REGLAGES_TEMPLATE"),
