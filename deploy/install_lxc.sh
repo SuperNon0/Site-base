@@ -67,6 +67,16 @@ if [ ! -f "${INSTALL_DIR}/.env" ]; then
     sed -i "s|^SECRET_KEY=.*|SECRET_KEY=${KEY}|" "${INSTALL_DIR}/.env"
     sed -i "s|^SUPERADMIN_EMAIL=.*|SUPERADMIN_EMAIL=${ADMIN_EMAIL}|" "${INSTALL_DIR}/.env"
     sed -i "s|^SUPERADMIN_PASSWORD=.*|SUPERADMIN_PASSWORD=${ADMIN_PASSWORD}|" "${INSTALL_DIR}/.env"
+    # Ref de la couche base à suivre pour « Mettre à jour la base » (ex. main pour
+    # être toujours à jour sans publier de tag ; sinon la dernière version publiée).
+    if [ -n "${BASE_REPO_REF:-}" ]; then
+        if grep -q '^BASE_REPO_REF=' "${INSTALL_DIR}/.env"; then
+            sed -i "s|^BASE_REPO_REF=.*|BASE_REPO_REF=${BASE_REPO_REF}|" "${INSTALL_DIR}/.env"
+        else
+            printf 'BASE_REPO_REF=%s\n' "${BASE_REPO_REF}" >> "${INSTALL_DIR}/.env"
+        fi
+        echo "   .env : les mises à jour de base suivront « ${BASE_REPO_REF} »."
+    fi
     echo "   .env créé (super-admin ${ADMIN_EMAIL:-sans e-mail} amorcé)."
 fi
 

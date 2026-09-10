@@ -23,6 +23,7 @@
 #   CORES=  MEMORY=  SWAP=  DISK=   (défaut : 1 / 512 Mo / 512 Mo / 4 Go)
 #   ADMIN_EMAIL=  ADMIN_PASSWORD=   compte super-admin (comme install.sh)
 #   REPO_URL=  REPO_REF=            projet à installer (défaut : site-base / main)
+#   BASE_REPO_REF=main              suit la base au fil de l'eau (pas de tag à publier)
 #
 set -euo pipefail
 
@@ -38,6 +39,7 @@ ADMIN_EMAIL="${ADMIN_EMAIL:-}"
 ADMIN_PASSWORD="${ADMIN_PASSWORD:-}"
 REPO_URL="${REPO_URL:-https://github.com/SuperNon0/Site-base.git}"
 REPO_REF="${REPO_REF:-}"
+BASE_REPO_REF="${BASE_REPO_REF:-}"
 INSTALLER_URL="${INSTALLER_URL:-https://raw.githubusercontent.com/SuperNon0/Site-base/main/install.sh}"
 
 if ! command -v pct >/dev/null 2>&1; then
@@ -118,6 +120,7 @@ pct exec "${VMID}" -- env \
   ADMIN_PASSWORD="${ADMIN_PASSWORD}" \
   REPO_URL="${REPO_URL}" \
   REPO_REF="${REPO_REF}" \
+  BASE_REPO_REF="${BASE_REPO_REF}" \
   bash /root/install.sh
 
 echo ""
