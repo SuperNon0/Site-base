@@ -81,6 +81,10 @@ def login():
     # Sécurité : si Cloudflare a authentifié un e-mail, on n'utilise pas ce chemin.
     if cf_access_email() is not None:
         return redirect(url_for("auth.gateway"))
+    # Login local désactivé (ALLOW_LOCAL_LOGIN=false) : entrée UNIQUEMENT par
+    # Cloudflare. On refuse aussi le POST direct (pas seulement le formulaire).
+    if not current_app.config.get("ALLOW_LOCAL_LOGIN", True):
+        return render_template("bloque.html", email="—"), 403
 
     time.sleep(1)  # anti-force brute (spec §9.5)
     password = request.form.get("password", "")

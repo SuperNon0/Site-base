@@ -16,6 +16,13 @@ publiée.
   détaillé + nettoyage d'une install faite par erreur sur l'hôte.
 - **`install.sh` gère `REPO_REF`** : installer un projet depuis une branche ou un
   tag précis (utile avant une fusion dans `main`).
+- **Option `BASE_REPO_REF`** (install + `.env`) : suivre la base au fil de l'eau
+  (`BASE_REPO_REF=main`) sans publier de tag ; sinon dernière version publiée.
+
+### Sécurité
+- **`ALLOW_LOCAL_LOGIN=false` est désormais étanche** : le POST direct sur `/login`
+  est refusé (403), pas seulement le formulaire masqué. Entrée uniquement par
+  Cloudflare quand le login local est désactivé.
 
 ### Modifié
 - **Navigation Paramètres / Réglages** : de vrais boutons « ← Accueil » et
