@@ -79,6 +79,15 @@ identiques partout) et **copie le thème tel quel** (CSS/HTML universels).
 | `ADMIN_PASSWORD` | mot de passe de secours LAN (vide = pas de login local) |
 | `ALLOWED_EMAILS` | (option) restreindre aussi côté appli ; vide = on fait confiance à Cloudflare |
 
+## Réinitialiser le mot de passe de secours local
+Le mot de passe local n'est pas en base : c'est `ADMIN_PASSWORD` dans le `.env`.
+Un script le change et recharge le service :
+```bash
+sudo bash deploy/reset-password.sh                 # génère un mot de passe et l'affiche
+sudo bash deploy/reset-password.sh 'MonNouveauMdp' # fixe un mot de passe précis
+```
+(Réglages si ton install diffère : `INSTALL_DIR=`, `SERVICE=`, `ENV_FILE=`.)
+
 ## Tests
 ```bash
 python socle-lite/tests/test_lite.py                        # 12 vérifs (Flask)
