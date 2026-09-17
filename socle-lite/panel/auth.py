@@ -144,3 +144,9 @@ def login():
 def logout():
     session.clear()
     return redirect(url_for("auth.gateway"))
+
+
+@bp.route("/mot-de-passe-oublie")
+def forgot():
+    """Page d'aide : le reset se fait sur le SERVEUR (jamais depuis le web)."""
+    return render_template("oubli.html")

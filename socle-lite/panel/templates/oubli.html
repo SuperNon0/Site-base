@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Mot de passe oublié — {{ brand.prefix }}{{ brand.suffix }}{% endblock %}
+{% block body_class %}login-page{% endblock %}
+{% block topbar %}{% endblock %}
+{% block content %}
+<div class="login-card">
+  <div class="login-logo">
+    <img class="logo-mark" src="{{ url_for('static', filename='logo.svg') }}" alt="" width="44" height="44">
+    <span class="logo"><span class="g">{{ brand.prefix }}</span><span class="i">{{ brand.suffix }}</span></span>
+  </div>
+  <h2>Mot de passe oublié</h2>
+  <p class="access-text">Par sécurité, le mot de passe local ne se réinitialise pas
+    depuis le web. Sur le <b>serveur</b>, lance :</p>
+  <pre class="cmd" style="white-space:pre-wrap;text-align:left">sudo bash deploy/reset-password.sh</pre>
+  <p class="access-note">Un nouveau mot de passe est généré et affiché (ou passe-le
+    en argument). L'entrée normale, elle, passe par <b>Cloudflare</b>.</p>
+  <a class="forgot-link" href="{{ url_for('auth.gateway') }}">← Retour</a>
+</div>
+{% endblock %}
