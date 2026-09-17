@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Accueil — {{ brand.prefix }}{{ brand.suffix }}{% endblock %}
+{% block content %}
+<main style="max-width:720px;margin:0 auto;padding:28px 20px 60px">
+  <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:22px">
+    <h1 class="fl-title-serif" style="font-size:1.9rem">Bienvenue</h1>
+    <a class="btn ghost small" href="{{ url_for('auth.logout') }}">Déconnexion</a>
+  </div>
+
+  <p class="muted" style="max-width:640px;margin-bottom:24px">
+    Socle-lite : <b style="color:var(--text)">login local + vérification Cloudflare</b>,
+    sans comptes ni rôles. Tu es connecté en tant que
+    <code>{{ current_email }}</code>. Remplace cette page par ton outil.
+  </p>
+
+  <div class="fl-card" style="max-width:320px">
+    <div class="fl-label">Statut</div>
+    <div class="fl-value-serif" style="font-size:1.4rem;margin-top:6px">Authentifié ✓</div>
+  </div>
+</main>
+{% endblock %}
