@@ -47,6 +47,9 @@ TA MISSION — SANS casser l'existant :
    - Utilise les classes du thème partagé (fl-card, fl-title-serif, .btn, .topbar…)
      pour que l'écran ait le même look que mes autres sites, tout en vivant dans la
      navigation du site.
+   - PAGE DE LOGIN identique aux autres sites : UN SEUL champ « mot de passe »,
+     AUCUN identifiant / e-mail / nom d'utilisateur (l'identité vient de Cloudflare ;
+     le mot de passe local n'est qu'un secours). Réutilise login.html du socle.
 
 5) « MOT DE PASSE OUBLIÉ » (sur le login) — SÛR
    - Le lien n'effectue AUCUN reset depuis le web (sinon n'importe qui pourrait

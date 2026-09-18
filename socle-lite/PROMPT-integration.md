@@ -46,6 +46,9 @@ TA MISSION — ajouter à CE projet, SANS casser ses fonctionnalités existantes
      réutilise les gabarits socle-lite/panel/templates/ (base.html, login.html,
      bloque.html) en adaptant url_for au framework.
    - N'invente pas de couleurs : passe par les variables :root du thème.
+   - PAGE DE LOGIN : identique aux autres sites → UN SEUL champ « mot de passe »,
+     AUCUN identifiant / e-mail / nom d'utilisateur (l'identité vient de Cloudflare ;
+     le mot de passe local n'est qu'un secours). Réutilise login.html du socle.
 
 AVANT DE DIRE QUE C'EST FINI
 - La vérif Cloudflare rejette un en-tête forgé sans jeton (teste-le).
