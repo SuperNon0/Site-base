@@ -46,9 +46,12 @@ TA MISSION — ajouter à CE projet, SANS casser ses fonctionnalités existantes
      réutilise les gabarits socle-lite/panel/templates/ (base.html, login.html,
      bloque.html) en adaptant url_for au framework.
    - N'invente pas de couleurs : passe par les variables :root du thème.
-   - PAGE DE LOGIN : identique aux autres sites → UN SEUL champ « mot de passe »,
+   - ⚠️ LA PAGE DE LOGIN DOIT ÊTRE IDENTIQUE SUR TOUS LES SITES. Reproduis
+     socle-lite/panel/templates/login.html À L'IDENTIQUE : même structure HTML,
+     mêmes classes, même disposition (logo + carte centrée). NE LA REDESSINE PAS.
+     Adapte uniquement url_for au framework. Contenu : UN SEUL champ « mot de passe »,
      AUCUN identifiant / e-mail / nom d'utilisateur (l'identité vient de Cloudflare ;
-     le mot de passe local n'est qu'un secours). Réutilise login.html du socle.
+     le mot de passe local n'est qu'un secours), + le lien « mot de passe oublié ».
 
 AVANT DE DIRE QUE C'EST FINI
 - La vérif Cloudflare rejette un en-tête forgé sans jeton (teste-le).
